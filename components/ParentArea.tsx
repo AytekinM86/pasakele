@@ -42,7 +42,12 @@ function Dashboard({ child: realChild, stories: real, insight: realInsight, onIn
   const [err, setErr] = useState("");
   const now = Date.now();
 
-  const useEx = showExample || real.length < 2 || !realChild;
+  // Real data only. The invented demo family appears only when a parent asks for it (button at the bottom).
+  const useEx = showExample;
+  if (!useEx && !realChild) return (
+    <section className="card"><h2>No child set up yet</h2><p className="muted">Open Story time, enter your child&apos;s name and language, and come back after the first story.</p>
+      <div><button className="btn" onClick={() => setShowExample(true)}>Show the demo family (invented)</button></div></section>
+  );
   const list = useEx ? EXAMPLES : real;
   const child = useEx ? EXAMPLE_CHILD : realChild!;
   const ins = useEx ? EXAMPLE_INSIGHT : realInsight;
@@ -53,9 +58,10 @@ function Dashboard({ child: realChild, stories: real, insight: realInsight, onIn
   const wordsAll = new Set(list.flatMap(s => s.wordList || []));
   const kpis: [string | number, string][] = [
     [list.length, "stories"], [list.filter(s => s.createdAt > now - 7 * DAY).length, "this week"],
-    [Math.round(list.reduce((a, s) => a + (s.words || 0), 0) / (list.length || 1)), "words per story"],
-    [useEx ? "+95%" : wordsAll.size || "–", useEx ? "vocabulary vs first week" : "different words used"],
+    [list.length ? Math.round(list.reduce((a, s) => a + (s.words || 0), 0) / list.length) : "–", "words per story"],
+    [wordsAll.size || "–", "different words used"],
   ];
+  const empty = (text: string) => <p className="muted">{text}</p>;
   const themeCount = THEMES.map(t => [t, list.filter(s => s.createdAt <= recentCut && s.themes.includes(t)).length, list.filter(s => s.createdAt > recentCut && s.themes.includes(t)).length] as const)
     .filter(r => r[1] + r[2]).sort((a, b) => b[1] + b[2] - (a[1] + a[2]));
   const maxT = Math.max(1, ...themeCount.map(r => r[1] + r[2]));
@@ -76,13 +82,12 @@ function Dashboard({ child: realChild, stories: real, insight: realInsight, onIn
 
   return (
     <>
-      <div className="row" style={{ justifyContent: "space-between" }}>
-        <div><span className="eyebrow">Story insights{useEx && <> · <span className="ex">Example family</span></>}</span>
-          <h1 style={{ fontSize: "1.8rem" }}>{child.name}, age {child.age}</h1>
-          {child.note && <p className="muted" style={{ fontSize: ".88rem" }}>{child.note}</p>}</div>
-        {real.length >= 2 && realChild && <button className="btn" onClick={() => setShowExample(!showExample)}>{showExample ? "Show my child" : "Show example family"}</button>}
-      </div>
-      {useEx && !showExample && <p className="note">You&apos;re seeing an example family. After {realChild ? `${realChild.name} tells` : "your child tells"} two stories in Story time, this page shows their own insights.</p>}
+      {useEx && <div className="demo-banner" role="status"><b>DEMO · invented family, not your child.</b> Everything below is made up to show how the page works.
+        <button className="btn" onClick={() => setShowExample(false)}>{realChild ? `Back to ${realChild.name}` : "Close demo"}</button></div>}
+      <div><span className="eyebrow">Story insights</span>
+        <h1 style={{ fontSize: "1.8rem" }}>{child.name}, age {child.age}</h1>
+        {child.note && <p className="muted" style={{ fontSize: ".88rem" }}>{child.note}</p>}</div>
+      {!useEx && !list.length && <p className="note">No stories yet. Everything on this page comes from {child.name}&apos;s own stories and fills in after each finished book.</p>}
       {talk && <div className="flag" role="alert"><div><b>Please talk with {child.name} about &quot;{talk.title}&quot;.</b><p>Something in this story may describe a real worry. Listen calmly. If you&apos;re concerned, contact a child psychologist or your family doctor.</p></div></div>}
 
       <div className="kpis">{kpis.map(([v, l]) => <div key={l} className="kpi"><b>{v}</b><span>{l}</span></div>)}</div>
@@ -90,17 +95,18 @@ function Dashboard({ child: realChild, stories: real, insight: realInsight, onIn
       <section className="card insight"><span className="eyebrow">This month</span>
         {ins ? <><h3>{ins.headline}</h3><ul>{ins.observations.map(o => <li key={o}>{o}</li>)}</ul>
           {ins.tryThis.length > 0 && <><p><b>Try this:</b></p><ul>{ins.tryThis.map(o => <li key={o}>{o}</li>)}</ul></>}</>
-          : <><h3>No summary yet</h3><p className="muted">Generate a summary of patterns across {child.name}&apos;s stories.</p></>}
-        {!useEx && <div><button className="btn teal" onClick={makeInsight} disabled={busy}>{busy ? "Reading the stories…" : ins ? "Refresh summary" : "Generate summary"}</button></div>}
+          : <><h3>No summary yet</h3><p className="muted">{list.length < 2 ? `A summary needs at least 2 stories. ${child.name} has ${list.length}.` : `Generate a summary of patterns across ${child.name}'s stories.`}</p></>}
+        {!useEx && <div><button className="btn teal" onClick={makeInsight} disabled={busy || list.length < 2}>{busy ? "Reading the stories…" : ins ? "Refresh summary" : "Generate summary"}</button></div>}
       </section>
 
       <Radar list={list} child={child} now={now} />
 
-      {flags.map(([t, n]) => <div key={t} className="flag"><div><b>&quot;{t}&quot; appeared in {n} of the last {last.length} stories.</b><p>This is common after changes like moving or a new group. A gentle chat at bedtime can help: ask how the story&apos;s hero felt.</p></div></div>)}
+      {flags.map(([t, n]) => <div key={t} className="flag"><div><b>&quot;{t}&quot; appeared in {n} of the last {last.length} stories.</b><p>A gentle chat at bedtime can help: ask how the story&apos;s hero felt.</p></div></div>)}
       {err && <p className="note" role="alert">{err}</p>}
 
       <section className="card"><div className="row" style={{ justifyContent: "space-between" }}><h3>Themes</h3>
         <div className="legend"><span><i style={{ background: "var(--muted)", opacity: 0.45 }} />Earlier</span><span><i style={{ background: "var(--teal)" }} />Last 14 days</span></div></div>
+        {!themeCount.length && empty("Themes appear after the first finished story.")}
         <div className="bars">{themeCount.map(([t, a, b]) => (
           <div key={t} style={{ display: "contents" }}><span>{t}</span>
             <div className="bar" role="img" aria-label={`${t}: ${a} earlier, ${b} recent`}><i style={{ width: `${(a / maxT) * 100}%`, background: "var(--muted)", opacity: 0.45 }} /><i style={{ width: `${(b / maxT) * 100}%`, background: HEAVY.includes(t) ? "var(--berry)" : "var(--teal)" }} /></div>
@@ -108,11 +114,11 @@ function Dashboard({ child: realChild, stories: real, insight: realInsight, onIn
       </section>
 
       <section className="card"><h3>Feelings in each story</h3><p className="muted" style={{ fontSize: ".88rem" }}>Bigger dot = stronger feeling. Oldest on the left.</p>
-        <div className="scroll"><EmotionStrip list={list} /></div></section>
+        {list.length ? <div className="scroll"><EmotionStrip list={list} /></div> : empty("Feelings appear after the first finished story.")}</section>
 
       <World list={list} />
 
-      <section className="card"><h3>Stories</h3><div className="slist">
+      <section className="card"><h3>Stories</h3>{!list.length && empty("No finished stories yet.")}<div className="slist">
         {list.slice().reverse().map(s => (
           <div key={s.id} className="sitem">
             <span className="dt">{shortDate(s.createdAt)}</span>
@@ -132,6 +138,7 @@ function Dashboard({ child: realChild, stories: real, insight: realInsight, onIn
       <Reports list={list} child={child} ins={ins} useEx={useEx} />
       {realChild && <Settings child={realChild} onChild={onChild} />}
       <p className="note">Pasakėlė notices patterns, it does not diagnose. Only text is kept, no voice recordings. Stories stay in this browser on this device. If something worries you, talk with your child and, if needed, a child psychologist.</p>
+      {!useEx && <div><button className="btn" onClick={() => { setShowExample(true); window.scrollTo(0, 0); }}>Show the demo family (invented, for presentations)</button></div>}
     </>
   );
 }
@@ -162,7 +169,7 @@ function Radar({ list, child, now }: { list: Story[]; child: Child; now: number 
     <section className="card"><div><span className="eyebrow">Mother-tongue radar</span>
       <h3>{words.length ? `${words.length} words came out in ${langs} instead of ${home}` : `${child.name} told every story fully in ${home}`}</h3></div>
       {words.length ? <>
-        <p className="muted" style={{ fontSize: ".9rem" }}>{recent} of them in the last 14 days. These are often words from kindergarten or school. Pelėda quietly uses the {home} word in its next reply, without correcting.</p>
+        <p className="muted" style={{ fontSize: ".9rem" }}>{recent} of them in the last 14 days. These are often words from kindergarten or school. The story friend quietly uses the {home} word in its next reply, without correcting.</p>
         <div className="wordgrid">{words.map(w => <div key={w.word} className="word"><span className="from">{w.word}</span><span className="arrow" aria-hidden="true">→</span><b>{w.native}</b><span className="muted">{w.gloss}{w.count > 1 ? ` · ×${w.count}` : ""}</span></div>)}</div>
         <div><p className="muted" style={{ fontSize: ".82rem", fontWeight: 700, marginBottom: 6 }}>Words in another language per story</p>
           <div className="minibars" role="img" aria-label={`Foreign words per story, oldest to newest: ${per.join(", ")}`}>{per.map((n, i) => <span key={i} title={`${list[i].title}: ${n}`} style={{ height: 6 + (n / max) * 44, opacity: n ? 1 : 0.3 }} />)}</div></div>
@@ -212,12 +219,12 @@ function Reports({ list, child, ins, useEx }: { list: Story[]; child: Child; ins
           <p className="muted" style={{ fontSize: ".9rem" }}>A summary of themes, feelings, characters and language over time, to bring to a child psychologist. Nothing is sent anywhere: you download it and decide who sees it.</p>
           <label className="f">Psychologist (optional)<input id="r-psy" maxLength={60} placeholder="Name of the specialist" value={psy} onChange={e => setPsy(e.target.value)} /></label>
           <label className="check"><input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} /> <span>I am {child.name}&apos;s parent or guardian and I agree to share this report with the specialist named above.</span></label>
-          <div><button className="btn teal" disabled={!consent} onClick={() => download(`pasakele-report-${child.name}.html`, reportHTML(list, child, ins, psy.trim()))}>Download report</button></div>
+          <div><button className="btn teal" disabled={!consent || !list.length} onClick={() => download(`pasakele-report-${child.name}.html`, reportHTML(list, child, ins, psy.trim()))}>Download report</button></div>
           <p className="muted" style={{ fontSize: ".8rem" }}>Opens in your browser. Use Print → Save as PDF to get a PDF.</p></div>
         <div className="sub"><h3>{child.name}&apos;s Book of {year}</h3>
           <div className="cover"><div className="cover-in"><small>{list.length} stories · {list.reduce((a, s) => a + s.pages.length, 0)} illustrated pages</small><b>{child.name}&apos;s Stories</b><small>{year}</small></div></div>
           <p className="muted" style={{ fontSize: ".9rem" }}>Every story from the year as one illustrated book. A gift for grandparents.</p>
-          <div className="row"><button className="btn" onClick={() => download(`${child.name}-stories-${year}.html`, bookHTML(list, child))}>Download the book</button>
+          <div className="row"><button className="btn" disabled={!list.length} onClick={() => download(`${child.name}-stories-${year}.html`, bookHTML(list, child))}>Download the book</button>
             <button className="btn sun" onClick={() => setOrdered(true)}>Order hardcover · €29</button></div>
           {ordered && <p className="note">Printing isn&apos;t connected yet, so no order was placed. In the real product a print partner ships the book.</p>}</div>
       </div>
