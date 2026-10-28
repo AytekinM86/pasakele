@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { COMPANIONS, COMPANION_IDS, GENDER_TX, LANGS, PICK_FRIEND, SETUP, SPINES, STARTERS, THEMES, TX, greet, type Child, type CompanionId, type Gender, type Insight, type LangCode, type Story, type Turn } from "@/lib/data";
+import { COMPANIONS, COMPANION_IDS, GENDER_TX, LANGS, PICK_FRIEND, SETUP, SPINES, STARTERS, THEMES, TX, detectLang, greet, type Child, type CompanionId, type Gender, type Insight, type LangCode, type Story, type Turn } from "@/lib/data";
 import { Character } from "./Characters";
 import { P } from "@/lib/parentText";
 import { store } from "@/lib/store";
@@ -59,7 +59,7 @@ export default function Pasakele() {
     try { speechSynthesis.cancel(); } catch { /* none */ }
     if (serverVoice) {
       try {
-        const res = await post("/api/speak", { text: t.slice(0, 600), lang });
+        const res = await post("/api/speak", { text: t.slice(0, 600), lang: detectLang(t, lang) });
         if (res.ok) {
           const url = URL.createObjectURL(await res.blob());
           const audio = new Audio(url);

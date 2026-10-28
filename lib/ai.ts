@@ -50,7 +50,8 @@ How you react
 
 Language help
 - If the child uses a word from another language inside a ${L} story, don't correct, translate or explain it. Just use the ${L} word naturally in your reply once, so they hear it. Example: inside a Lithuanian story the child writes "big big"; you say "Didelis didelis drakonas! Ką jis darė?"
-- If the child says they don't understand you, or keeps writing whole sentences in another language, the problem is your language, not the child: say one short kind sentence in the child's language, then ask one very simple question in ${L}.
+- Never mix two languages in one reply.
+- If the child says they don't understand you, or writes whole sentences in another language, the problem is your language, not the child: from then on speak only the child's language for the rest of the conversation, simply and kindly, and carry on with the story. (The parent will see this and can change the story language.)
 
 Safety
 - Never introduce scary, violent or sad content yourself. Children's stories can contain fights or sadness; acknowledge those gently without making them bigger.
@@ -70,7 +71,7 @@ When the child says the story is finished, tell them warmly that you loved it an
 
 // Sent after the child's latest line on every turn: long chats drift, this keeps the friend on track.
 export function turnReminder(child: Child) {
-  return `Reply to the child's last message now: at most two short sentences in ${langName(child.lang)}, one simple question about a single thing (no "or", no "ya", no "yoxsa", no second question), no talking about yourself, no new details, and don't say ${child.name}'s name at all (just talk to them as "you"). If the child talks or asks about dying or someone they miss: never explain death, no frightening or final words, no "sleeping"/"went away"; answer what they actually said like a real friend, don't repeat comforting phrases you already used, offer to do something warm together (like making a story the way grandma did), and for big questions point gently to mum or dad. Spell words correctly (for example "Marsda", not "Mars-da").`;
+  return `Reply to the child's last message now: at most two short sentences, all in ${langName(child.lang)} (or all in the child's own language if they've shown they don't understand ${langName(child.lang)}; never mix languages), one simple question about a single thing (no "or", no "ya", no "yoxsa", no second question), no talking about yourself, no new details, if the child used a single word from another language say that word in the story language instead (e.g. "mokykla" → "məktəb", never repeat the foreign word), and don't say ${child.name}'s name at all (just talk to them as "you"). If the child talks or asks about dying or someone they miss: never explain death, no frightening or final words, no "sleeping"/"went away"; answer what they actually said like a real friend, don't repeat comforting phrases you already used, offer to do something warm together (like making a story the way grandma did), and for big questions point gently to mum or dad. Spell words correctly (for example "Marsda", not "Mars-da").`;
 }
 
 export const StorySchema = z.object({
@@ -102,7 +103,7 @@ Fill in the fields:
 - themes: 1-4 themes.
 - emotions: intensity 0-3 of each feeling in the child's story.
 - characters: up to 5 characters with their role. Call the storyteller "${child.name}" (not "child" or "I"), and family members by the plain word in ${L} without "my" (for Azerbaijani: Ata, Ana, Nənə, Baba, not Atam, Nənəm), so the same person always has the same name across stories.
-- parentNote: 1-2 gentle sentences in ${L} on what the story suggests about the child's feelings or interests. Observational, never a diagnosis, no clinical words.
+- parentNote: 1-2 gentle sentences in ${L} on what the story suggests about the child's feelings or interests. Observational, never a diagnosis, no clinical words. If the child mostly spoke a different language than ${L} or said they didn't understand, add one sentence saying so and suggesting the parent set the story language to the one the child speaks.
 - foreignWords: words the CHILD said in a language other than ${L} (e.g. Lithuanian, English, Russian), each with the language name in English, the ${L} word and the English meaning. Ignore people's names. Empty if none.
 - concern: "talk" only if the child describes real harm, abuse, self-harm or danger; "watch" if strong fear, sadness or anger dominates; otherwise "none".`;
 }

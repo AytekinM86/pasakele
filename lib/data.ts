@@ -8,7 +8,17 @@ export const LANGS: Record<LangCode, { label: string; bcp47: string; english: st
   ru: { label: "Русский", bcp47: "ru-RU", english: "Russian" },
 };
 
-export const THEMES = ["friendship", "family", "adventure", "magic", "animals", "kindness", "courage", "fear", "loneliness", "loss", "conflict", "school", "home", "being different"] as const;
+// Guesses which of our languages a reply is written in, from its letters, so the voice uses the right accent.
+// Falls back to the story language when the text has no telling letters.
+export function detectLang(text: string, fallback: LangCode): LangCode {
+  if (/[а-яё]/i.test(text)) return "ru";
+  if (/[əğı]/i.test(text)) return "az";
+  if (/[ąęėįųūčšž]/i.test(text)) return "lt";
+  if (fallback !== "en" && /^[\x00-\x7F’…]*$/.test(text) && /\b(the|you|is|what|and|your|did)\b/i.test(text)) return "en";
+  return fallback;
+}
+
+export const THEMES =["friendship", "family", "adventure", "magic", "animals", "kindness", "courage", "fear", "loneliness", "loss", "conflict", "school", "home", "being different"] as const;
 export type Theme = (typeof THEMES)[number];
 export const HEAVY: Theme[] = ["fear", "loneliness", "loss", "conflict"];
 
