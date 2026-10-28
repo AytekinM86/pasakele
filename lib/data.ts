@@ -44,7 +44,15 @@ export const PICK_FRIEND: Record<LangCode, string> = {
   lt: "Su kuo nori šiandien kalbėtis?", ru: "С кем хочешь поговорить сегодня?",
 };
 
-export type Child = { name: string; age: number; lang: LangCode; note?: string; companion?: CompanionId };
+export type Gender = "girl" | "boy";
+export type Child = { name: string; age: number; lang: LangCode; note?: string; companion?: CompanionId; gender?: Gender };
+// Set by the parent; used to draw the child in books and for gendered grammar (Lithuanian, Russian).
+export const GENDER_TX: Record<LangCode, { label: string; girl: string; boy: string; none: string }> = {
+  az: { label: "Uşaq", girl: "Qız", boy: "Oğlan", none: "Seçilməyib" },
+  en: { label: "Child is a", girl: "Girl", boy: "Boy", none: "Not set" },
+  lt: { label: "Vaikas", girl: "Mergaitė", boy: "Berniukas", none: "Nenurodyta" },
+  ru: { label: "Ребёнок", girl: "Девочка", boy: "Мальчик", none: "Не указано" },
+};
 export type Story = {
   id: string; createdAt: number; lang: LangCode; title: string; pages: Page[]; summary: string;
   themes: Theme[]; emotions: Record<EmotionKey, number>; characters: { name: string; role: Role }[];

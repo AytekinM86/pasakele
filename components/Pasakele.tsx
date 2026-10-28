@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { COMPANIONS, COMPANION_IDS, LANGS, PICK_FRIEND, SETUP, SPINES, STARTERS, THEMES, TX, greet, type Child, type CompanionId, type Insight, type LangCode, type Story, type Turn } from "@/lib/data";
+import { COMPANIONS, COMPANION_IDS, GENDER_TX, LANGS, PICK_FRIEND, SETUP, SPINES, STARTERS, THEMES, TX, greet, type Child, type CompanionId, type Gender, type Insight, type LangCode, type Story, type Turn } from "@/lib/data";
 import { Character } from "./Characters";
 import { P } from "@/lib/parentText";
 import { store } from "@/lib/store";
@@ -135,18 +135,21 @@ function Setup({ onDone }: { onDone: (c: Child) => void }) {
   const [lang, setLang] = useState<LangCode>("az");
   const [name, setName] = useState("");
   const [age, setAge] = useState(6);
-  const t = SETUP[lang];
+  const [gender, setGender] = useState<Gender | "">("");
+  const t = SETUP[lang], g = GENDER_TX[lang];
   return (
     <section className="card" style={{ alignItems: "center", textAlign: "center" }}>
       <Character id="owl" /><span className="eyebrow">{t.eb}</span><h1 style={{ fontSize: "1.9rem" }}>{t.h}</h1>
       <p className="muted" style={{ maxWidth: "50ch" }}>{t.p}</p>
       <form className="row" style={{ justifyContent: "center", alignItems: "flex-end" }}
-        onSubmit={e => { e.preventDefault(); if (name.trim()) onDone({ name: name.trim(), age, lang }); }}>
+        onSubmit={e => { e.preventDefault(); if (name.trim()) onDone({ name: name.trim(), age, lang, gender: gender || undefined }); }}>
         <label className="f">{t.l}<select id="c-lang" value={lang} onChange={e => setLang(e.target.value as LangCode)}>
           {Object.entries(LANGS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</select></label>
         <label className="f">{t.n}<input id="c-name" required maxLength={20} value={name} onChange={e => setName(e.target.value)} placeholder={t.ph} /></label>
         <label className="f">{t.a}<select id="c-age" value={age} onChange={e => setAge(+e.target.value)}>
           {[3, 4, 5, 6, 7, 8, 9, 10].map(a => <option key={a}>{a}</option>)}</select></label>
+        <label className="f">{g.label}<select id="c-gender" value={gender} onChange={e => setGender(e.target.value as Gender | "")}>
+          <option value="">{g.none}</option><option value="girl">{g.girl}</option><option value="boy">{g.boy}</option></select></label>
         <button className="btn sun big" type="submit">{t.go}</button>
       </form>
     </section>

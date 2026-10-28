@@ -57,7 +57,7 @@ export const P: Record<LangCode, ParentText> = {
     bookP: "İlin bütün nağılları bir şəkilli kitabda. Nənə və babalar üçün gözəl hədiyyə.", downloadBook: "Kitabı yüklə", order: "Kitab sifariş et · €29",
     orderNote: "Çap xidməti hələ qoşulmayıb, sifariş verilmədi. Real məhsulda çap partnyoru kitabı göndərəcək.", exampleData: "Bunlar nümunə ailənin məlumatlarıdır.",
     settingsH: "Uşaq ayarları", settingsP: "Bunları yalnız böyüklər dəyişə bilər. Nağıl vaxtında dil seçimi yoxdur, uşaq həmişə sizin seçdiyiniz dili eşidir.",
-    storyLang: "Nağıl dili", name: "Ad", age: "Yaş", save: "Yadda saxla", saved: l => `Saxlanıldı. Nağıl vaxtı indi ${l} dilindədir.`,
+    storyLang: "Nağıl dili", name: "Ad", age: "Yaş", save: "Yadda saxla", saved: l => `Saxlanıldı. Nağıl dili: ${l}.`,
     footer: "Pasakėlė təkrarlanan mövzuları müşahidə edir, diaqnoz qoymur. Yalnız mətn saxlanılır, səs yazısı yoxdur. Nağıllar yalnız bu cihazdakı brauzerdə qalır. Narahat olsanız, uşaqla danışın və lazım gələrsə, uşaq psixoloquna müraciət edin.",
   },
   en: {

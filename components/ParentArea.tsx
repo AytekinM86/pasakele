@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { EMO, HEAVY, LANGS, ROLE, THEMES, TX, type Child, type Insight, type LangCode, type Role, type Setting, type Story } from "@/lib/data";
+import { EMO, GENDER_TX, HEAVY, LANGS, ROLE, THEMES, TX, type Child, type Gender, type Insight, type LangCode, type Role, type Setting, type Story } from "@/lib/data";
 import { EXAMPLES, EXAMPLE_CHILD, EXAMPLE_INSIGHT } from "@/lib/examples";
 import { bookHTML, download, reportHTML } from "@/lib/reports";
 import { post } from "@/lib/api";
@@ -246,14 +246,18 @@ function Settings({ child, onChild }: { child: Child; onChild: (c: Child) => voi
   const [lang, setLang] = useState<LangCode>(child.lang);
   const [name, setName] = useState(child.name);
   const [age, setAge] = useState(child.age);
+  const [gender, setGender] = useState<Gender | "">(child.gender || "");
   const [msg, setMsg] = useState("");
+  const g = GENDER_TX[child.lang];
   return (
     <section className="card"><h3>{t.settingsH}</h3>
       <p className="muted" style={{ fontSize: ".9rem" }}>{t.settingsP}</p>
-      <form className="row" style={{ alignItems: "flex-end" }} onSubmit={e => { e.preventDefault(); if (!name.trim()) return; onChild({ name: name.trim(), age, lang }); setMsg(P[lang].saved(LANGS[lang].label)); }}>
+      <form className="row" style={{ alignItems: "flex-end" }} onSubmit={e => { e.preventDefault(); if (!name.trim()) return; onChild({ ...child, name: name.trim(), age, lang, gender: gender || undefined }); setMsg(P[lang].saved(LANGS[lang].label)); }}>
         <label className="f">{t.storyLang}<select id="s-lang" value={lang} onChange={e => setLang(e.target.value as LangCode)}>{Object.entries(LANGS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</select></label>
         <label className="f">{t.name}<input id="s-name" required maxLength={20} value={name} onChange={e => setName(e.target.value)} /></label>
         <label className="f">{t.age}<select id="s-age" value={age} onChange={e => setAge(+e.target.value)}>{[3, 4, 5, 6, 7, 8, 9, 10].map(a => <option key={a}>{a}</option>)}</select></label>
+        <label className="f">{g.label}<select id="s-gender" value={gender} onChange={e => setGender(e.target.value as Gender | "")}>
+          <option value="">{g.none}</option><option value="girl">{g.girl}</option><option value="boy">{g.boy}</option></select></label>
         <button className="btn teal">{t.save}</button><span className="muted" role="status">{msg}</span>
       </form>
     </section>

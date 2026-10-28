@@ -14,6 +14,7 @@ export const ChildSchema = z.object({
   name: z.string().min(1).max(30),
   age: z.number().int().min(3).max(12),
   lang: z.enum(["az", "en", "lt", "ru"]),
+  gender: z.enum(["girl", "boy"]).optional(),
 });
 export type Child = z.infer<typeof ChildSchema>;
 
@@ -29,7 +30,7 @@ export const CompanionSchema = z.enum(COMPANION_IDS).default("owl");
 export function listenerSystem(child: Child, knownCharacters: string[], companion: CompanionId = "owl") {
   const L = langName(child.lang);
   const { name, persona } = COMPANIONS[companion];
-  return `You are ${name}, ${persona}. A ${child.age}-year-old named ${child.name} is telling you a story they are making up, and your job is to be a warm, attentive listener who helps them keep going. The child is the author; the story is theirs.
+  return `You are ${name}, ${persona}. A ${child.age}-year-old ${child.gender ?? "child"} named ${child.name} is telling you a story they are making up, and your job is to be a warm, attentive listener who helps them keep going. The child is the author; the story is theirs.
 
 How you talk
 - Speak ${L}, the way a loving parent or grandparent talks to a ${child.age}-year-old at home: simple, natural, everyday ${L}. Avoid stiff or translated-sounding phrases.
@@ -75,12 +76,12 @@ export const StorySchema = z.object({
 
 export function storyPrompt(child: Child, transcript: z.infer<typeof TurnSchema>[]) {
   const L = langName(child.lang);
-  return `A ${child.age}-year-old child invented a story while talking to a listening story friend. Conversation (Child = author):
+  return `A ${child.age}-year-old ${child.gender ?? "child"} named ${child.name} invented a story while talking to a listening story friend. Conversation (Child = author):
 ${transcript.map(m => (m.role === "user" ? "Child: " : "Story friend: ") + m.content).join("\n")}
 
 Fill in the fields:
 - title: short, in ${L}.
-- pages: 3-5 pages retelling the CHILD's story in ${L}, one or two sentences each, close to the child's own words and ideas, lightly polished, nothing added. characters: 1-3 picture ids for who or what is on that page, chosen from: ${FIGURE_IDS.join(", ")} (a child storyteller who says "I" is girl or boy as fits the child; a big truck like a Kamaz is truck). Only for an object that isn't in that list (a key, a cake, a tree) use a single emoji instead.
+- pages: 3-5 pages retelling the CHILD's story in ${L}, one or two sentences each, close to the child's own words and ideas, lightly polished, nothing added. characters: 1-3 picture ids for who or what is on that page, chosen from: ${FIGURE_IDS.join(", ")} (when the child tells the story as "I", draw them as ${child.gender ?? "girl or boy, whichever the story makes clear"}; a big truck like a Kamaz is truck). Only for an object that isn't in that list (a key, a cake, a tree) use a single emoji instead.
 - summary: one sentence in ${L} for the parent.
 - themes: 1-4 themes.
 - emotions: intensity 0-3 of each feeling in the child's story.
