@@ -55,6 +55,12 @@ label.f { display: flex; flex-direction: column; gap: 5px; font-weight: 700; fon
 /* Child: listener */
 .stage { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 16px; align-items: start }
 .owl { width: 120px; height: auto }
+/* The chosen friend stays in view: on wide screens the big picture is pinned under the friend row;
+   on phones it is hidden and a small picture sits beside each of the friend's messages instead. */
+.stage > .owl { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 140px) }
+.say-row { display: flex; align-items: flex-end; gap: 8px; align-self: flex-start; max-width: 92% }
+.say-row .bub { max-width: 100% }
+.mini { display: none; width: 38px; height: auto; flex: none }
 .lid { transform-box: fill-box; transform-origin: center; transform: scaleY(0); animation: blink 5s infinite }
 .thinking .owl-body { animation: bob .8s ease-in-out infinite alternate }
 @keyframes blink { 0%, 94%, 100% { transform: scaleY(0) } 96% { transform: scaleY(1) } }
@@ -161,5 +167,5 @@ details.tx p { padding-block: 3px }
 .cover-in small { font-weight: 700; opacity: .85 }
 
 @media (max-width: 640px) { .twocol { grid-template-columns: 1fr } }
-@media (max-width: 560px) { .stage { grid-template-columns: 1fr } .owl { position: static; width: 90px; margin: 0 auto } .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
+@media (max-width: 560px) { .stage { grid-template-columns: 1fr } .stage > .owl { display: none } .mini { display: block } .owl { width: 90px; margin: 0 auto } .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important } }

@@ -250,8 +250,10 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
       )}
       <div className={`stage ${busy || listening ? "thinking" : ""}`}><Character id={companion} />
         <div className="chat" aria-live="polite">
-          <div className="bub owl-say">{making ? tx.making : greet(child.lang, child.name, companion)}</div>
-          {chat.map((m, i) => <div key={i} className={`bub ${m.role === "user" ? "kid" : "owl-say"}`}>{m.content}</div>)}
+          <div className="say-row"><Character id={companion} className="mini" /><div className="bub owl-say">{making ? tx.making : greet(child.lang, child.name, companion)}</div></div>
+          {chat.map((m, i) => m.role === "user"
+            ? <div key={i} className="bub kid">{m.content}</div>
+            : <div key={i} className="say-row"><Character id={companion} className="mini" /><div className="bub owl-say">{m.content}</div></div>)}
           <div ref={endRef} style={{ scrollMarginBottom: 200 }} />
         </div>
       </div>
