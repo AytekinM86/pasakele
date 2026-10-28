@@ -239,8 +239,8 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
 
   return (
     <>
-      {!chat.length && (
-        <section className="friends" aria-labelledby="pick-h">
+      {(
+        <section className={`friends ${chat.length ? "compact" : ""}`} aria-labelledby="pick-h">
           <h2 id="pick-h">{PICK_FRIEND[child.lang]}</h2>
           <div className="friend-row">{COMPANION_IDS.map(id => (
             <button key={id} className="friend" aria-pressed={companion === id} onClick={() => onCompanion(id)}>

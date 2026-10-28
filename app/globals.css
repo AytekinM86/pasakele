@@ -54,8 +54,8 @@ label.f { display: flex; flex-direction: column; gap: 5px; font-weight: 700; fon
 
 /* Child: listener */
 .stage { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 16px; align-items: start }
-.owl { width: 120px; height: auto; position: sticky; top: 80px }
-.owl .lid { transform-box: fill-box; transform-origin: center; animation: blink 5s infinite }
+.owl { width: 120px; height: auto }
+.lid { transform-box: fill-box; transform-origin: center; transform: scaleY(0); animation: blink 5s infinite }
 .thinking .owl-body { animation: bob .8s ease-in-out infinite alternate }
 @keyframes blink { 0%, 94%, 100% { transform: scaleY(0) } 96% { transform: scaleY(1) } }
 @keyframes bob { to { transform: translateY(-5px) } }
@@ -73,9 +73,23 @@ label.f { display: flex; flex-direction: column; gap: 5px; font-weight: 700; fon
 .mic.on { background: var(--berry); color: var(--paper); animation: pulse 1s ease-in-out infinite }
 .mic:disabled { opacity: .5; cursor: not-allowed }
 @keyframes pulse { 50% { box-shadow: 0 0 0 10px rgb(201 60 106 / .2) } }
-/* Friend picker: the child chooses who listens to the story. */
-.friends { display: flex; flex-direction: column; gap: 10px }
+/* Friend picker: the child chooses who listens to the story. It stays pinned under the header;
+   once the story starts it shrinks to a compact row so the chat keeps most of the screen. */
+.friends { display: flex; flex-direction: column; gap: 10px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 59px); z-index: 4;
+  background: var(--bg); padding-block: 10px; margin-top: -10px; box-shadow: 0 12px 12px -8px var(--bg) }
 .friends h2 { font-size: 1.3rem }
+.friends.compact h2 { display: none }
+.friends.compact .friend-row { gap: 6px }
+.friends.compact .friend { flex-direction: row; justify-content: center; padding: 4px 6px; border-width: 2px; border-radius: 14px; font-size: .9rem; gap: 6px }
+.friends.compact .friend-pic { max-width: 34px }
+@media (max-width: 560px) {
+  .top-in { flex-wrap: nowrap }
+  .brand { font-size: 1.1rem }
+  .brand svg { width: 28px; height: 28px }
+  .modes button { padding: 5px 10px; font-size: .8rem }
+  .friends.compact .friend-row { grid-template-columns: repeat(6, minmax(0, 1fr)) }
+  .friends.compact .friend span { display: none }
+}
 .friend-row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px }
 .friend { border: 3px solid var(--line); background: var(--paper); border-radius: 18px; padding: 8px 6px 10px; cursor: pointer;
   display: flex; flex-direction: column; align-items: center; gap: 4px; font-family: var(--display); font-weight: 600; font-size: 1rem }
