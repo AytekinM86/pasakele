@@ -42,18 +42,39 @@ export default function Pasakele() {
     return () => speechSynthesis.removeEventListener("voiceschanged", load);
   }, []);
 
+  // The owl speaks with the ElevenLabs voice when the server has it, otherwise with a matching browser voice.
+  const [serverVoice, setServerVoice] = useState(false);
+  useEffect(() => { fetch("/api/speak").then(r => r.json()).then(r => setServerVoice(!!r.enabled)).catch(() => {}); }, []);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
   const lang: LangCode = child?.lang || "en";
   const voice = voices.find(v => v.lang?.toLowerCase().startsWith(lang));
-  const speak = useCallback((t: string) => {
-    if (!voice || !speakOn) return;
-    try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.voice = voice; u.lang = voice.lang; u.rate = 0.95; u.pitch = 1.15; speechSynthesis.speak(u); } catch { /* no speech */ }
-  }, [voice, speakOn]);
+  const speak = useCallback(async (t: string) => {
+    if (!speakOn) return;
+    audioRef.current?.pause();
+    try { speechSynthesis.cancel(); } catch { /* none */ }
+    if (serverVoice) {
+      try {
+        const res = await post("/api/speak", { text: t.slice(0, 600), lang });
+        if (res.ok) {
+          const url = URL.createObjectURL(await res.blob());
+          const audio = new Audio(url);
+          audio.onended = () => URL.revokeObjectURL(url);
+          audioRef.current = audio;
+          await audio.play();
+          return;
+        }
+      } catch { /* fall back to the browser voice */ }
+    }
+    if (!voice) return;
+    try { const u = new SpeechSynthesisUtterance(t); u.voice = voice; u.lang = voice.lang; u.rate = 0.95; u.pitch = 1.15; speechSynthesis.speak(u); } catch { /* no speech */ }
+  }, [voice, speakOn, serverVoice, lang]);
 
   const saveChild = (c: Child) => { setChild(c); store.saveChild(c); };
   const addStory = (s: Story) => { setStories(prev => { const next = [...prev, s]; store.saveStories(next); return next; }); };
   const saveInsight = (i: Insight) => { setInsight(i); store.saveInsight(i); };
 
-  const switchMode = (m: Mode) => { setMode(m); try { speechSynthesis.cancel(); } catch { /* none */ } };
+  const switchMode = (m: Mode) => { setMode(m); audioRef.current?.pause(); try { speechSynthesis.cancel(); } catch { /* none */ } };
 
   return (
     <>
@@ -69,8 +90,8 @@ export default function Pasakele() {
         {mode === "parent"
           ? <ParentArea child={child} stories={stories} insight={insight} onInsight={saveInsight} onChild={saveChild} />
           : !child ? <Setup onDone={saveChild} />
-          : <StoryTime child={child} stories={stories} onStory={addStory} speak={speak} canSpeak={!!voice}
-              speakOn={speakOn} setSpeakOn={v => { setSpeakOn(v); store.saveSpeak(v); if (!v) try { speechSynthesis.cancel(); } catch { /* none */ } }} />}
+          : <StoryTime child={child} stories={stories} onStory={addStory} speak={speak} canSpeak={serverVoice || !!voice}
+              speakOn={speakOn} setSpeakOn={v => { setSpeakOn(v); store.saveSpeak(v); if (!v) { audioRef.current?.pause(); try { speechSynthesis.cancel(); } catch { /* none */ } } }} />}
       </div></main>
     </>
   );
