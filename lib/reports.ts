@@ -1,6 +1,7 @@
 import { EMO, type Child, type Insight, type Role, type Story, type Theme } from "./data";
 import { paint } from "./paint";
 import { REPORT, otherLangName } from "./reportText";
+import { FIGURE_IDS, loadFigures } from "./figures";
 
 const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
@@ -41,7 +42,8 @@ export function reportHTML(list: Story[], child: Child, ins: Insight | null, psy
 }
 
 // All stories as one illustrated book, with the cover in the child's story language.
-export function bookHTML(list: Story[], child: Child) {
+export async function bookHTML(list: Story[], child: Child) {
+  await loadFigures(FIGURE_IDS);
   const t = REPORT[child.lang];
   const day = (ms: number) => new Date(ms).toLocaleDateString(t.locale);
   const cv = document.createElement("canvas"), year = new Date().getFullYear();

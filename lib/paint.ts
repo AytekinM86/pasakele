@@ -1,4 +1,5 @@
 import type { Page } from "./data";
+import { FIGURES, figureImage } from "./figures";
 
 // Deterministic pseudo-random numbers so each page always gets the same picture.
 function rnd(seed: number) {
@@ -6,8 +7,10 @@ function rnd(seed: number) {
   return () => (s = (s * 16807) % 2147483647) / 2147483647;
 }
 
-// Draws a simple storybook scene (sky, ground, setting, emoji characters) onto a canvas.
-export function paint(cv: HTMLCanvasElement, p: Page, seed: number) {
+// Draws a simple storybook scene (sky, ground, setting, characters) onto a canvas.
+// Characters are drawn full-body figures when known (see figures.ts), otherwise emoji.
+// onReady is called once a figure that wasn't loaded yet arrives, so the caller can repaint.
+export function paint(cv: HTMLCanvasElement, p: Page, seed: number, onReady?: () => void) {
   const W = 800, H = 500, x = cv.getContext("2d");
   if (!x) return;
   cv.width = W; cv.height = H;
@@ -44,9 +47,19 @@ export function paint(cv: HTMLCanvasElement, p: Page, seed: number) {
 
   const ch = (p.characters || []).slice(0, 3), n = ch.length;
   x.textAlign = "center"; x.textBaseline = "middle";
+  let waiting = false;
   ch.forEach((e, i) => {
-    const cx = W * (n === 1 ? 0.38 : 0.2 + i * (0.5 / (n - 1 || 1))), cy = 380 - (i % 2) * 25;
-    x.fillStyle = "rgba(0,0,0,.15)"; x.beginPath(); x.ellipse(cx, cy + 62, 55, 12, 0, 0, 7); x.fill();
-    x.fillStyle = "#000"; x.font = `${i === 0 ? 130 : 105}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`; x.fillText(e, cx, cy);
+    const cx = W * (n === 1 ? 0.38 : 0.2 + i * (0.6 / (n - 1 || 1))), groundY = 462 - (i % 2) * 22;
+    const id = e.trim().toLowerCase(), fig = FIGURES[id];
+    x.fillStyle = "rgba(0,0,0,.15)"; x.beginPath(); x.ellipse(cx, groundY, 58, 12, 0, 0, 7); x.fill();
+    if (fig) {
+      const img = figureImage(id)!;
+      if (img.complete && img.naturalWidth) {
+        const h = 215 * fig.size * (i === 0 ? 1 : 0.9), w = h * 100 / 140;
+        x.drawImage(img, cx - w / 2, groundY - h + 4, w, h);
+      } else if (!waiting && onReady) { waiting = true; img.addEventListener("load", onReady, { once: true }); }
+      return;
+    }
+    x.fillStyle = "#000"; x.font = `${i === 0 ? 130 : 105}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`; x.fillText(e, cx, groundY - 70);
   });
 }

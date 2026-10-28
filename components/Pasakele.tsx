@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { COMPANIONS, COMPANION_IDS, LANGS, PICK_FRIEND, SETUP, SPINES, STARTERS, THEMES, TX, greet, type Child, type CompanionId, type Insight, type LangCode, type Story, type Turn } from "@/lib/data";
 import { Character } from "./Characters";
+import { P } from "@/lib/parentText";
 import { store } from "@/lib/store";
 import { paint } from "@/lib/paint";
 import { NEED_CODE, post } from "@/lib/api";
@@ -49,6 +50,8 @@ export default function Pasakele() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const lang: LangCode = child?.lang || "en";
+  // The page language drives correct capitals in uppercase labels (Azerbaijani i → İ) and screen-reader voices.
+  useEffect(() => { document.documentElement.lang = lang; }, [lang]);
   const voice = voices.find(v => v.lang?.toLowerCase().startsWith(lang));
   const speak = useCallback(async (t: string) => {
     if (!speakOn) return;
@@ -82,8 +85,8 @@ export default function Pasakele() {
       <header className="top"><div className="top-in">
         <div className="brand"><OwlMark />Pasakėlė</div>
         <div className="modes" role="group" aria-label="Mode">
-          <button aria-pressed={mode === "child"} onClick={() => switchMode("child")}>Story time</button>
-          <button aria-pressed={mode === "parent"} onClick={() => switchMode("parent")}>For parents</button>
+          <button aria-pressed={mode === "child"} onClick={() => switchMode("child")}>{P[lang].storyTime}</button>
+          <button aria-pressed={mode === "parent"} onClick={() => switchMode("parent")}>{P[lang].forParents}</button>
         </div>
       </div></header>
       <main><div className="wrap">
@@ -304,7 +307,10 @@ export function Book({ story, tx, speak, canSpeak, onClose }: { story: Story; tx
   const [page, setPage] = useState(0);
   const cv = useRef<HTMLCanvasElement>(null);
   const p = story.pages[page] || story.pages[0];
-  useEffect(() => { if (cv.current) paint(cv.current, p, (story.createdAt % 997) + page * 31); }, [p, page, story.createdAt]);
+  useEffect(() => {
+    const draw = () => { if (cv.current) paint(cv.current, p, (story.createdAt % 997) + page * 31, draw); };
+    draw();
+  }, [p, page, story.createdAt]);
   const last = page === story.pages.length - 1;
   return (
     <div className="book">

@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { COMPANIONS, COMPANION_IDS, LANGS, THEMES, type CompanionId, type LangCode } from "./data";
+import { FIGURE_IDS } from "./figures";
 
 // Server-only: the key is read from ANTHROPIC_API_KEY (.env.local locally, Vercel env vars in production).
 export const client = new Anthropic();
@@ -40,7 +41,7 @@ How you react
 - Respond to what the child just said, using their own words and character names, and match the feeling of that moment: if something sad or hurtful happens in the story, be gentle and caring ("Oh no, that's sad…"), never call it interesting or nice; if it's funny, enjoy it; if it's exciting, be excited.
 - Then ask one simple question about a single thing, or invite them to continue ("What happened next?"). Never ask two things at once or offer choices.
 - Never add details, characters, places, feelings or plot the child didn't say; if you're curious about something, ask.
-- Children type without special letters or in dialect ("yeke" = yekə = big, "cox" = çox, "hamini" = hamını, "ejdaha" = əjdaha); read them that way, and always write the correctly spelled word yourself (your words are read aloud). If you're unsure what a word means, repeat the child's word rather than replacing it.
+- Children type without special letters or in dialect ("yeke" = yekə = big, "cox" = çox, "hamini" = hamını, "ejdaha" = əjdaha, "meseye" = meşəyə = to the forest, "agac" = ağac); read them that way, choosing the meaning that fits the story so far, and always write the correctly spelled word yourself (your words are read aloud). If you're unsure what a word means, repeat the child's word rather than replacing it.
 - When it's unclear who did something (the child writes just "cried"), ask who, don't assume.
 - If the child seems confused ("what?", "?", "nə?", "ką?"), ask something even simpler, like what happened next.
 
@@ -79,7 +80,7 @@ ${transcript.map(m => (m.role === "user" ? "Child: " : "Story friend: ") + m.con
 
 Fill in the fields:
 - title: short, in ${L}.
-- pages: 3-5 pages retelling the CHILD's story in ${L}, one or two sentences each, close to the child's own words and ideas, lightly polished, nothing added. characters: 1-3 single emoji for the characters or objects on that page.
+- pages: 3-5 pages retelling the CHILD's story in ${L}, one or two sentences each, close to the child's own words and ideas, lightly polished, nothing added. characters: 1-3 picture ids for who or what is on that page, chosen from: ${FIGURE_IDS.join(", ")} (a child storyteller who says "I" is girl or boy as fits the child; a big truck like a Kamaz is truck). Only for an object that isn't in that list (a key, a cake, a tree) use a single emoji instead.
 - summary: one sentence in ${L} for the parent.
 - themes: 1-4 themes.
 - emotions: intensity 0-3 of each feeling in the child's story.
