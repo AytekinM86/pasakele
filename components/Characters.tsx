@@ -1,4 +1,5 @@
 import type { CompanionId } from "@/lib/data";
+import type { GiftId } from "@/lib/rewards";
 
 // Hand-drawn story friends. All share a 120x130 box; "owl-body" makes them bob while the friend is thinking.
 const INK = "var(--ink)";
@@ -89,7 +90,23 @@ function Unicorn() {
 
 const DRAW: Record<CompanionId, () => React.ReactElement> = { owl: Owl, doll: Doll, car: Car, puppy: Puppy, dino: Dino, unicorn: Unicorn };
 
-export function Character({ id = "owl", className = "owl" }: { id?: CompanionId; className?: string }) {
+// Presents the friend has received as the child's bookshelf grows (see lib/rewards.ts).
+function Gifts({ gifts, front }: { gifts: GiftId[]; front: boolean }) {
+  const has = (g: GiftId) => gifts.includes(g);
+  if (!front) return has("rainbow") ? <g opacity=".85" fill="none" strokeWidth="5">
+    <path d="M8 118 A52 52 0 0 1 112 118" stroke="#ff7a7a" /><path d="M14 118 A46 46 0 0 1 106 118" stroke="#ffd25e" />
+    <path d="M20 118 A40 40 0 0 1 100 118" stroke="#6fd19d" /><path d="M26 118 A34 34 0 0 1 94 118" stroke="#7ea6ff" /></g> : null;
+  return <>
+    {has("sparkle") && <g className="sparkle" fill="#ffd25e"><path d="M104 8 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3 z" /><path d="M114 32 l2 4 4 2 -4 2 -2 4 -2 -4 -4 -2 4 -2 z" /></g>}
+    {has("balloon") && <g className="balloon"><path d="M12 40 Q16 62 10 84" stroke="#888" strokeWidth="1.2" fill="none" /><ellipse cx="12" cy="26" rx="9" ry="12" fill="#ff5d73" /><path d="M10 37 h4 l-2 4 z" fill="#ff5d73" /><ellipse cx="9" cy="22" rx="2.5" ry="4" fill="#fff" opacity=".6" /></g>}
+    {has("medal") && <g><path d="M96 92 l-5 12 h10 z M104 92 l5 12 h-10 z" fill="#3a86ff" /><circle cx="100" cy="110" r="8" fill="#ffc93c" stroke="#e8a800" strokeWidth="2" /><path d="M100 105 l1.6 3.4 3.6.4 -2.7 2.4 .8 3.6 -3.3 -1.9 -3.3 1.9 .8 -3.6 -2.7 -2.4 3.6 -.4 z" fill="#fff8d6" /></g>}
+    {has("crown") && <g transform="rotate(-14 22 12)"><path d="M8 18 L11 4 L17 11 L22 2 L27 11 L33 4 L36 18 Z" fill="#ffd25e" stroke="#e8a800" strokeWidth="1.5" /><circle cx="22" cy="14" r="2" fill="#ff5d73" /></g>}
+  </>;
+}
+
+export function Character({ id = "owl", className = "owl", gifts = [] }: { id?: CompanionId; className?: string; gifts?: GiftId[] }) {
   const Draw = DRAW[id] || Owl;
-  return <svg className={className} viewBox="0 0 120 130" aria-hidden="true"><g className="owl-body"><Draw /></g></svg>;
+  return <svg className={className} viewBox="0 0 120 130" aria-hidden="true">
+    <Gifts gifts={gifts} front={false} /><g className="owl-body"><Draw /></g><Gifts gifts={gifts} front />
+  </svg>;
 }

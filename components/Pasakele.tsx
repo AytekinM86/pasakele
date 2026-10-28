@@ -1,8 +1,10 @@
 "use client";
+/* eslint-disable @next/next/no-img-element -- stickers are tiny inline SVG data URIs, next/image adds nothing */
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { COMPANIONS, COMPANION_IDS, GENDER_TX, LANGS, PICK_FRIEND, SETUP, SPINES, STARTERS, THEMES, TX, detectLang, greet, type Child, type CompanionId, type Gender, type Insight, type LangCode, type Story, type Turn } from "@/lib/data";
 import { Character } from "./Characters";
+import { ALL_STICKERS, GIFTS, REWARD_TX, giftsFor, nextGiftIn, stickerSrc, stickersFrom, type GiftId } from "@/lib/rewards";
 import { P } from "@/lib/parentText";
 import { store } from "@/lib/store";
 import { paint } from "@/lib/paint";
@@ -176,6 +178,9 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
   const [making, setMaking] = useState(false);
   const [err, setErr] = useState("");
   const [book, setBook] = useState<Story | null>(null);
+  const [album, setAlbum] = useState(false);
+  const [party, setParty] = useState<Celebration | null>(null);
+  const rt = REWARD_TX[child.lang], gifts = giftsFor(stories.length);
   const [listening, setListening] = useState(false);
   const recRef = useRef<Recognition | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -234,7 +239,11 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
         words: words.size, wordList: [...words].slice(0, 400), transcript: chat.slice(-40),
       };
       if (!st.pages.length) st.pages = [{ text: kidLines.join(" "), setting: "meadow", time: "day", characters: ["⭐"] }];
-      onStory(st); setChat([]); setBook(st);
+      const had = stickersFrom(stories), n = stories.length + 1;
+      const fresh = [...stickersFrom([st])].filter(id => !had.has(id));
+      const gift = GIFTS.find(g => g.at === n)?.id;
+      onStory(st); setChat([]); setBook(st); setParty({ n, fresh, gift });
+      speak(rt.nthBook(n) + (gift ? " " + rt.present(COMPANIONS[companion].name, rt.gifts[gift]) : ""));
     } catch (e) { if ((e as Error).message !== "🔒") setErr((e as Error).message); }
     setBusy(false); setMaking(false);
   }
@@ -257,7 +266,9 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
     rec.start();
   }
 
-  if (book) return <Book story={book} tx={tx} speak={speak} canSpeak={canSpeak} onClose={() => setBook(null)} />;
+  if (book) return <Book story={book} tx={tx} speak={speak} canSpeak={canSpeak} onClose={() => { setBook(null); setParty(null); }}
+    banner={party && <Party party={party} rt={rt} friend={companion} gifts={gifts} />} />;
+  if (album) return <Album have={stickersFrom(stories)} rt={rt} back={tx.back} onClose={() => setAlbum(false)} />;
 
   return (
     <>
@@ -266,11 +277,11 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
           <h2 id="pick-h">{PICK_FRIEND[child.lang]}</h2>
           <div className="friend-row">{COMPANION_IDS.map(id => (
             <button key={id} className="friend" aria-pressed={companion === id} onClick={() => onCompanion(id)}>
-              <Character id={id} className="friend-pic" /><span>{COMPANIONS[id].name}</span>
+              <Character id={id} className="friend-pic" gifts={gifts} /><span>{COMPANIONS[id].name}</span>
             </button>))}</div>
         </section>
       )}
-      <div className={`stage ${busy || listening ? "thinking" : ""}`}><Character id={companion} />
+      <div className={`stage ${busy || listening ? "thinking" : ""}`}><Character id={companion} gifts={gifts} />
         <div className="chat" aria-live="polite">
           <div className="say-row"><Character id={companion} className="mini" /><div className="bub owl-say">{making ? tx.making : greet(child.lang, child.name, companion)}</div></div>
           {chat.map((m, i) => m.role === "user"
@@ -297,6 +308,12 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
       </div>
       </div>
       {!canSpeak && <p className="note">{tx.novoice}</p>}
+      <div className="row rewards-row">
+        <button className="btn album-btn" onClick={() => setAlbum(true)}>
+          <span className="album-stack" aria-hidden="true">{[...stickersFrom(stories)].slice(-3).map(id => <img key={id} src={stickerSrc(id)} alt="" />)}</span>
+          {rt.albumBtn} · {rt.collected(stickersFrom(stories).size, ALL_STICKERS.length)}</button>
+        {nextGiftIn(stories.length) > 0 && <span className="muted next-gift">🎁 {rt.nextGift(nextGiftIn(stories.length))}</span>}
+      </div>
       {stories.length > 0 && (
         <section className="card"><h2 style={{ fontSize: "1.3rem" }}>{tx.shelf}</h2>
           <div className="shelf">{stories.slice().reverse().map((s, i) => (
@@ -308,7 +325,7 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
   );
 }
 
-export function Book({ story, tx, speak, canSpeak, onClose }: { story: Story; tx: Record<string, string>; speak: (t: string) => void; canSpeak: boolean; onClose: () => void }) {
+export function Book({ story, tx, speak, canSpeak, onClose, banner }: { story: Story; tx: Record<string, string>; speak: (t: string) => void; canSpeak: boolean; onClose: () => void; banner?: React.ReactNode }) {
   const [page, setPage] = useState(0);
   const cv = useRef<HTMLCanvasElement>(null);
   const p = story.pages[page] || story.pages[0];
@@ -320,6 +337,7 @@ export function Book({ story, tx, speak, canSpeak, onClose }: { story: Story; tx
   return (
     <div className="book">
       <div className="row" style={{ justifyContent: "space-between" }}><button className="btn" onClick={onClose}>{tx.back}</button>{story.example && <span className="ex">Example story</span>}</div>
+      {banner}
       <h1 style={{ fontSize: "clamp(1.6rem,6vw,2.3rem)" }}>{story.title}</h1>
       <article className="page"><canvas ref={cv} aria-label={`Illustration: ${p.setting} at ${p.time}`} /><p className="txt">{p.text}</p></article>
       <div className="pager">
@@ -328,6 +346,38 @@ export function Book({ story, tx, speak, canSpeak, onClose }: { story: Story; tx
         <button className="btn sun" onClick={() => { if (last) onClose(); else { setPage(page + 1); speak(story.pages[page + 1].text); } }}>{last ? tx.fin : tx.next}</button>
       </div>
       {canSpeak && <button className="btn" onClick={() => speak(p.text)}>{tx.read}</button>}
+    </div>
+  );
+}
+
+type Celebration = { n: number; fresh: string[]; gift?: GiftId };
+
+// Shown on top of a freshly made book: which book this is, new stickers, and a present for the friend.
+function Party({ party, rt, friend, gifts }: { party: Celebration; rt: (typeof REWARD_TX)[LangCode]; friend: CompanionId; gifts: GiftId[] }) {
+  return (
+    <section className="party" role="status">
+      <div className="confetti" aria-hidden="true">{Array.from({ length: 18 }, (_, i) => <i key={i} style={{ left: `${(i * 37) % 100}%`, animationDelay: `${(i % 6) * 0.15}s`, background: ["#ffc93c", "#ff7a9c", "#4fc4c0", "#7ea6ff", "#9b59d6"][i % 5] }} />)}</div>
+      <div className="party-in">
+        {party.gift && <Character id={friend} className="party-friend" gifts={gifts} />}
+        <div>
+          <h2>🎉 {rt.nthBook(party.n)}</h2>
+          {party.gift && <p><b>{rt.present(COMPANIONS[friend].name, rt.gifts[party.gift])}</b></p>}
+          {party.fresh.length > 0 && <div className="row"><span>{rt.newStickers}</span>{party.fresh.map(id => <img key={id} className="sticker-sm" src={stickerSrc(id)} alt={id} />)}</div>}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Every possible sticker, collected ones in colour and the rest as soft silhouettes.
+function Album({ have, rt, back, onClose }: { have: Set<string>; rt: (typeof REWARD_TX)[LangCode]; back: string; onClose: () => void }) {
+  return (
+    <div className="book">
+      <div><button className="btn" onClick={onClose}>{back}</button></div>
+      <h1 style={{ fontSize: "clamp(1.6rem,6vw,2.3rem)" }}>{rt.albumH}</h1>
+      <p className="muted">{rt.albumP} <b>{rt.collected(have.size, ALL_STICKERS.length)}</b></p>
+      <div className="album">{ALL_STICKERS.map(id => (
+        <div key={id} className={`sticker ${have.has(id) ? "got" : ""}`}><img src={stickerSrc(id)} alt={have.has(id) ? id : "?"} /></div>))}</div>
     </div>
   );
 }

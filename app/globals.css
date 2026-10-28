@@ -121,6 +121,30 @@ label.f { display: flex; flex-direction: column; gap: 5px; font-weight: 700; fon
 .starter { border: 2px dashed var(--line); background: none; border-radius: 16px; padding: 8px 14px; font-weight: 700; cursor: pointer; text-align: left }
 .starter:hover { border-color: var(--teal) }
 
+/* Rewards: sticker album, presents, celebration */
+.rewards-row { justify-content: space-between }
+.album-btn { gap: 10px }
+.album-stack { display: inline-flex }
+.album-stack img { width: 26px; height: 36px; margin-left: -8px; filter: drop-shadow(0 1px 1px rgb(0 0 0 / .2)) }
+.album-stack img:first-child { margin-left: 0 }
+.next-gift { font-weight: 700; font-size: .9rem }
+.album { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px }
+.sticker { aspect-ratio: 3 / 4; border-radius: 16px; background: var(--paper); border: 2px dashed var(--line); display: grid; place-items: center; padding: 8px }
+.sticker img { max-height: 100%; filter: grayscale(1) brightness(1.6) opacity(.28) }
+.sticker.got { border: 2px solid var(--sun); background: var(--teal-soft) }
+.sticker.got img { filter: drop-shadow(0 2px 2px rgb(0 0 0 / .15)) }
+.party { position: relative; overflow: hidden; border-radius: 20px; background: var(--sun); color: var(--sun-ink); padding: 16px 18px }
+.party-in { position: relative; display: flex; align-items: center; gap: 14px }
+.party h2 { font-size: 1.35rem }
+.party-friend { width: 84px; height: auto; flex: none }
+.sticker-sm { width: 34px; height: 46px }
+.confetti i { position: absolute; top: -12px; width: 8px; height: 12px; border-radius: 2px; animation: fall 1.6s ease-in forwards; opacity: 0 }
+@keyframes fall { 0% { transform: translateY(0) rotate(0); opacity: 1 } 100% { transform: translateY(170px) rotate(320deg); opacity: 0 } }
+.sparkle { animation: twinkle 1.8s ease-in-out infinite }
+@keyframes twinkle { 50% { opacity: .35 } }
+.balloon { animation: float 3s ease-in-out infinite; transform-box: fill-box }
+@keyframes float { 50% { transform: translateY(-4px) } }
+
 /* Book */
 .book { display: flex; flex-direction: column; gap: 14px }
 .page { background: var(--paper); border: 1px solid var(--line); border-radius: 22px; overflow: hidden }
