@@ -3,6 +3,11 @@ import { paint } from "./paint";
 import { REPORT, otherLangName } from "./reportText";
 import { FIGURE_IDS, loadFigures } from "./figures";
 
+// dd.mm.yyyy everywhere except English: some browsers print Azerbaijani dates as 2026-10-28.
+const fmtDay = (ms: number, locale: string) => {
+  const d = new Date(ms);
+  return locale.startsWith("en") ? d.toLocaleDateString("en-GB") : [d.getDate(), d.getMonth() + 1].map(x => String(x).padStart(2, "0")).join(".") + "." + d.getFullYear();
+};
 const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
 const shell = (lang: string, title: string, body: string) => `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title>
@@ -12,7 +17,7 @@ const shell = (lang: string, title: string, body: string) => `<!doctype html><ht
 // Opens in a browser; Print -> Save as PDF makes a PDF.
 export function reportHTML(list: Story[], child: Child, ins: Insight | null, psy: string) {
   const t = REPORT[child.lang];
-  const day = (ms: number) => new Date(ms).toLocaleDateString(t.locale);
+  const day = (ms: number) => fmtDay(ms, t.locale);
   const fw = list.flatMap(s => (s.foreignWords || []).map(w => ({ ...w, title: s.title })));
   const chars: Record<string, { role: Role; n: number }> = {};
   list.forEach(s => (s.characters || []).forEach(c => { chars[c.name] = chars[c.name] || { role: c.role, n: 0 }; chars[c.name].n++; }));
@@ -45,7 +50,7 @@ export function reportHTML(list: Story[], child: Child, ins: Insight | null, psy
 export async function bookHTML(list: Story[], child: Child) {
   await loadFigures(FIGURE_IDS);
   const t = REPORT[child.lang];
-  const day = (ms: number) => new Date(ms).toLocaleDateString(t.locale);
+  const day = (ms: number) => fmtDay(ms, t.locale);
   const cv = document.createElement("canvas"), year = new Date().getFullYear();
   const pages = list.map(s => `<div class="page"><h2 style="border:0">${esc(s.title)}</h2><p class="muted" style="font-size:14px">${day(s.createdAt)}</p></div>` +
     s.pages.map((p, i) => { paint(cv, p, (s.createdAt % 997) + i * 31); return `<div class="page"><img src="${cv.toDataURL("image/jpeg", 0.82)}" alt=""><p>${esc(p.text)}</p></div>`; }).join("")).join("");

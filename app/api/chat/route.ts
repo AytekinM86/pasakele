@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     const stream = client.messages.stream({
       model: CHAT_MODEL,
       max_tokens: 1024,
-      output_config: { effort: "medium" },
+      output_config: { effort: "low" },
       system: listenerSystem(child, knownCharacters, companion),
       // A short operator reminder after the child's latest line keeps long chats as short and gentle as the first turns.
       messages: [...messages, { role: "system", content: turnReminder(child) }],
