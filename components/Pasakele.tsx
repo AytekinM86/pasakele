@@ -1,0 +1,254 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import { GREET, LANGS, SETUP, SPINES, STARTERS, THEMES, TX, type Child, type Insight, type LangCode, type Story, type Turn } from "@/lib/data";
+import { store } from "@/lib/store";
+import { paint } from "@/lib/paint";
+import { ParentArea } from "./ParentArea";
+
+type Mode = "child" | "parent";
+
+// Minimal typing for the browser's speech recognition (Chrome exposes it as webkitSpeechRecognition).
+type Recognition = { lang: string; interimResults: boolean; continuous: boolean; start(): void; stop(): void;
+  onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal: boolean }> }) => void) | null;
+  onend: (() => void) | null; onerror: (() => void) | null };
+const getRecognition = (): (new () => Recognition) | null => {
+  if (typeof window === "undefined") return null;
+  const w = window as unknown as { SpeechRecognition?: new () => Recognition; webkitSpeechRecognition?: new () => Recognition };
+  return w.SpeechRecognition || w.webkitSpeechRecognition || null;
+};
+
+export default function Pasakele() {
+  // This component only renders in the browser (see ClientApp), so localStorage can seed state directly.
+  const [mode, setMode] = useState<Mode>("child");
+  const [child, setChild] = useState<Child | null>(store.child);
+  const [stories, setStories] = useState<Story[]>(store.stories);
+  const [insight, setInsight] = useState<Insight | null>(store.insight);
+  const [speakOn, setSpeakOn] = useState(store.speak);
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>(() => ("speechSynthesis" in window ? speechSynthesis.getVoices() : []));
+
+  useEffect(() => {
+    if (!("speechSynthesis" in window)) return;
+    const load = () => setVoices(speechSynthesis.getVoices());
+    speechSynthesis.addEventListener("voiceschanged", load);
+    return () => speechSynthesis.removeEventListener("voiceschanged", load);
+  }, []);
+
+  const lang: LangCode = child?.lang || "en";
+  const voice = voices.find(v => v.lang?.toLowerCase().startsWith(lang));
+  const speak = useCallback((t: string) => {
+    if (!voice || !speakOn) return;
+    try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.voice = voice; u.lang = voice.lang; u.rate = 0.95; u.pitch = 1.15; speechSynthesis.speak(u); } catch { /* no speech */ }
+  }, [voice, speakOn]);
+
+  const saveChild = (c: Child) => { setChild(c); store.saveChild(c); };
+  const addStory = (s: Story) => { setStories(prev => { const next = [...prev, s]; store.saveStories(next); return next; }); };
+  const saveInsight = (i: Insight) => { setInsight(i); store.saveInsight(i); };
+
+  const switchMode = (m: Mode) => { setMode(m); try { speechSynthesis.cancel(); } catch { /* none */ } };
+
+  return (
+    <>
+      <header className="top"><div className="top-in">
+        <div className="brand"><OwlMark />Pasakėlė</div>
+        <div className="modes" role="group" aria-label="Mode">
+          <button aria-pressed={mode === "child"} onClick={() => switchMode("child")}>Story time</button>
+          <button aria-pressed={mode === "parent"} onClick={() => switchMode("parent")}>For parents</button>
+        </div>
+      </div></header>
+      <main><div className="wrap">
+        {mode === "parent"
+          ? <ParentArea child={child} stories={stories} insight={insight} onInsight={saveInsight} onChild={saveChild} />
+          : !child ? <Setup onDone={saveChild} />
+          : <StoryTime child={child} stories={stories} onStory={addStory} speak={speak} canSpeak={!!voice}
+              speakOn={speakOn} setSpeakOn={v => { setSpeakOn(v); store.saveSpeak(v); if (!v) try { speechSynthesis.cancel(); } catch { /* none */ } }} />}
+      </div></main>
+    </>
+  );
+}
+
+function OwlMark() {
+  return <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="21" r="16" fill="var(--teal)" /><circle cx="14" cy="18" r="5.5" fill="var(--paper)" /><circle cx="26" cy="18" r="5.5" fill="var(--paper)" /><circle cx="14" cy="18" r="2.4" fill="var(--ink)" /><circle cx="26" cy="18" r="2.4" fill="var(--ink)" /><path d="M18 24l2 3 2-3z" fill="var(--sun)" /></svg>;
+}
+
+export function Owl() {
+  return (
+    <svg className="owl" viewBox="0 0 120 130" aria-hidden="true"><g className="owl-body">
+      <path d="M28 30 L22 8 L44 22 Z M92 30 L98 8 L76 22 Z" fill="var(--teal)" />
+      <ellipse cx="60" cy="72" rx="44" ry="52" fill="var(--teal)" /><ellipse cx="60" cy="88" rx="28" ry="32" fill="var(--teal-soft)" />
+      <circle cx="42" cy="50" r="16" fill="var(--paper)" /><circle cx="78" cy="50" r="16" fill="var(--paper)" />
+      <circle cx="44" cy="52" r="7" fill="var(--ink)" /><circle cx="80" cy="52" r="7" fill="var(--ink)" />
+      <rect className="lid" x="26" y="34" width="68" height="32" rx="16" fill="var(--teal)" />
+      <path d="M54 62 L60 74 L66 62 Z" fill="var(--sun)" />
+      <path d="M40 122 l6 -8 l6 8 M68 122 l6 -8 l6 8" stroke="var(--sun)" strokeWidth="4" fill="none" strokeLinecap="round" />
+    </g></svg>
+  );
+}
+
+function Setup({ onDone }: { onDone: (c: Child) => void }) {
+  const [lang, setLang] = useState<LangCode>("az");
+  const [name, setName] = useState("");
+  const [age, setAge] = useState(6);
+  const t = SETUP[lang];
+  return (
+    <section className="card" style={{ alignItems: "center", textAlign: "center" }}>
+      <Owl /><span className="eyebrow">{t.eb}</span><h1 style={{ fontSize: "1.9rem" }}>{t.h}</h1>
+      <p className="muted" style={{ maxWidth: "50ch" }}>{t.p}</p>
+      <form className="row" style={{ justifyContent: "center", alignItems: "flex-end" }}
+        onSubmit={e => { e.preventDefault(); if (name.trim()) onDone({ name: name.trim(), age, lang }); }}>
+        <label className="f">{t.l}<select id="c-lang" value={lang} onChange={e => setLang(e.target.value as LangCode)}>
+          {Object.entries(LANGS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</select></label>
+        <label className="f">{t.n}<input id="c-name" required maxLength={20} value={name} onChange={e => setName(e.target.value)} placeholder={t.ph} /></label>
+        <label className="f">{t.a}<select id="c-age" value={age} onChange={e => setAge(+e.target.value)}>
+          {[3, 4, 5, 6, 7, 8, 9, 10].map(a => <option key={a}>{a}</option>)}</select></label>
+        <button className="btn sun big" type="submit">{t.go}</button>
+      </form>
+    </section>
+  );
+}
+
+function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeakOn }: {
+  child: Child; stories: Story[]; onStory: (s: Story) => void; speak: (t: string) => void;
+  canSpeak: boolean; speakOn: boolean; setSpeakOn: (v: boolean) => void;
+}) {
+  const tx = TX[child.lang];
+  const [chat, setChat] = useState<Turn[]>([]);
+  const [draft, setDraft] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [making, setMaking] = useState(false);
+  const [err, setErr] = useState("");
+  const [book, setBook] = useState<Story | null>(null);
+  const [listening, setListening] = useState(false);
+  const recRef = useRef<Recognition | null>(null);
+  const endRef = useRef<HTMLDivElement>(null);
+  const Rec = getRecognition();
+
+  useEffect(() => { endRef.current?.scrollIntoView({ block: "nearest" }); }, [chat]);
+
+  const known = [...new Set(stories.flatMap(s => s.characters.map(c => c.name)))].slice(-15);
+
+  async function send(text: string) {
+    text = text.trim();
+    if (!text || busy) return;
+    const history: Turn[] = [...chat, { role: "user", content: text }];
+    setChat([...history, { role: "assistant", content: "…" }]); setDraft(""); setBusy(true); setErr("");
+    try {
+      const res = await fetch("/api/chat", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ child, messages: history, knownCharacters: known }) });
+      if (!res.ok || !res.body) throw new Error((await res.json().catch(() => null))?.error || "The owl couldn't answer just now. Try again.");
+      const reader = res.body.getReader(), dec = new TextDecoder();
+      let reply = "";
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        reply += dec.decode(value, { stream: true });
+        setChat([...history, { role: "assistant", content: reply }]);
+      }
+      reply = reply.trim() || "…";
+      setChat([...history, { role: "assistant", content: reply }]);
+      speak(reply);
+    } catch (e) {
+      setChat(history.slice(0, -1)); setDraft(text); setErr((e as Error).message);
+    }
+    setBusy(false);
+  }
+
+  async function finish() {
+    const kidLines = chat.filter(m => m.role === "user").map(m => m.content);
+    if (kidLines.join(" ").split(/\s+/).length < 8) { setErr(tx.more); return; }
+    setBusy(true); setMaking(true); setErr("");
+    try {
+      const res = await fetch("/api/story", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ child, transcript: chat.slice(-60) }) });
+      const r = await res.json();
+      if (!res.ok) throw new Error(r.error || "The book couldn't be made. Try again.");
+      const words = new Set(kidLines.join(" ").toLowerCase().match(/[\p{L}']+/gu) || []);
+      const now = Date.now();
+      const st: Story = {
+        id: "s_" + now, createdAt: now, lang: child.lang, title: String(r.title || "My story").slice(0, 80),
+        pages: (r.pages || []).slice(0, 5).map((p: Story["pages"][number]) => ({ ...p, characters: (p.characters || []).slice(0, 3) })),
+        summary: r.summary || "", themes: (r.themes || []).filter((t: string) => (THEMES as readonly string[]).includes(t)).slice(0, 4),
+        emotions: r.emotions, characters: (r.characters || []).slice(0, 5), parentNote: r.parentNote || "",
+        foreignWords: (r.foreignWords || []).slice(0, 20), concern: r.concern || "none",
+        words: words.size, wordList: [...words].slice(0, 400), transcript: chat.slice(-40),
+      };
+      if (!st.pages.length) st.pages = [{ text: kidLines.join(" "), setting: "meadow", time: "day", characters: ["⭐"] }];
+      onStory(st); setChat([]); setBook(st);
+    } catch (e) { setErr((e as Error).message); }
+    setBusy(false); setMaking(false);
+  }
+
+  function toggleMic() {
+    if (!Rec) { setErr(tx.nomic); return; }
+    if (listening) { recRef.current?.stop(); return; }
+    const rec = new Rec();
+    rec.lang = LANGS[child.lang].bcp47; rec.interimResults = true; rec.continuous = false;
+    let finalText = "";
+    rec.onresult = e => {
+      let interim = ""; finalText = "";
+      for (let i = 0; i < e.results.length; i++) { const r = e.results[i]; if (r.isFinal) finalText += r[0].transcript; else interim += r[0].transcript; }
+      setDraft(finalText + interim);
+    };
+    rec.onerror = () => setErr(tx.nomic);
+    rec.onend = () => { setListening(false); if (finalText.trim()) send(finalText); };
+    recRef.current = rec; setErr(""); setListening(true);
+    try { speechSynthesis.cancel(); } catch { /* none */ }
+    rec.start();
+  }
+
+  if (book) return <Book story={book} tx={tx} speak={speak} canSpeak={canSpeak} onClose={() => setBook(null)} />;
+
+  return (
+    <>
+      <div className={`stage ${busy || listening ? "thinking" : ""}`}><Owl />
+        <div className="chat" aria-live="polite">
+          <div className="bub owl-say">{making ? tx.making : GREET[child.lang](child.name)}</div>
+          {chat.map((m, i) => <div key={i} className={`bub ${m.role === "user" ? "kid" : "owl-say"}`}>{m.content}</div>)}
+          <div ref={endRef} />
+        </div>
+      </div>
+      {!chat.length && <div className="starters">{STARTERS[child.lang].map(s => <button key={s} className="starter" onClick={() => send(s)}>{s}</button>)}</div>}
+      <div className="composer">
+        <button className={`mic ${listening ? "on" : ""}`} onClick={toggleMic} disabled={busy} aria-label={tx.mic} title={tx.mic}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>
+        </button>
+        <textarea id="kid" rows={1} value={draft} placeholder={listening ? tx.listening : tx.ph} disabled={busy}
+          onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(draft); } }} />
+        <button className="btn teal" onClick={() => send(draft)} disabled={busy}>{tx.tell}</button>
+      </div>
+      {err && <p className="note" role="alert">{err}</p>}
+      <div className="row">
+        <button className="btn sun big" onClick={finish} disabled={busy || !chat.length}>{tx.end}</button>
+        {canSpeak && <button className="btn" aria-pressed={speakOn} onClick={() => setSpeakOn(!speakOn)}>{speakOn ? tx.on : tx.off}</button>}
+        {chat.length > 0 && <button className="btn" onClick={() => { setChat([]); setErr(""); }}>{tx.again}</button>}
+      </div>
+      {!canSpeak && <p className="note">{tx.novoice}</p>}
+      {stories.length > 0 && (
+        <section className="card"><h2 style={{ fontSize: "1.3rem" }}>{child.name}{tx.shelf}</h2>
+          <div className="shelf">{stories.slice().reverse().map((s, i) => (
+            <button key={s.id} className="spine" style={{ background: SPINES[i % SPINES.length] }} onClick={() => setBook(s)}>
+              {s.title}<small>{new Date(s.createdAt).toLocaleDateString()}</small></button>))}</div>
+        </section>
+      )}
+    </>
+  );
+}
+
+export function Book({ story, tx, speak, canSpeak, onClose }: { story: Story; tx: Record<string, string>; speak: (t: string) => void; canSpeak: boolean; onClose: () => void }) {
+  const [page, setPage] = useState(0);
+  const cv = useRef<HTMLCanvasElement>(null);
+  const p = story.pages[page] || story.pages[0];
+  useEffect(() => { if (cv.current) paint(cv.current, p, (story.createdAt % 997) + page * 31); }, [p, page, story.createdAt]);
+  const last = page === story.pages.length - 1;
+  return (
+    <div className="book">
+      <div className="row" style={{ justifyContent: "space-between" }}><button className="btn" onClick={onClose}>{tx.back}</button>{story.example && <span className="ex">Example story</span>}</div>
+      <h1 style={{ fontSize: "clamp(1.6rem,6vw,2.3rem)" }}>{story.title}</h1>
+      <article className="page"><canvas ref={cv} aria-label={`Illustration: ${p.setting} at ${p.time}`} /><p className="txt">{p.text}</p></article>
+      <div className="pager">
+        <button className="btn" onClick={() => setPage(page - 1)} disabled={page === 0}>{tx.prev}</button>
+        <div className="dots">{story.pages.map((_, i) => <i key={i} className={i === page ? "on" : ""} />)}</div>
+        <button className="btn sun" onClick={() => { if (last) onClose(); else { setPage(page + 1); speak(story.pages[page + 1].text); } }}>{last ? tx.fin : tx.next}</button>
+      </div>
+      {canSpeak && <button className="btn" onClick={() => speak(p.text)}>{tx.read}</button>}
+    </div>
+  );
+}
