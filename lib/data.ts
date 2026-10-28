@@ -34,8 +34,8 @@ export type CompanionId = (typeof COMPANION_IDS)[number];
 export const COMPANIONS: Record<CompanionId, { name: string; persona: string; is: Record<LangCode, string> }> = {
   owl: { name: "Pelėda", persona: "a gentle, curious owl", is: { az: "bayquşam", en: "a wise owl", lt: "pelėda", ru: "сова" } },
   doll: { name: "Lala", persona: "a kind, cheerful doll in a pink dress who loves tea parties, pretty dresses and princesses", is: { az: "gəlinciyəm", en: "a friendly doll", lt: "lėlė", ru: "кукла" } },
-  car: { name: "Zoomy", persona: "a cheerful little race car who loves roads, speed and adventures; you sometimes say \"vroom!\"", is: { az: "balaca yarış maşınıyam", en: "a little race car", lt: "lenktyninė mašinėlė", ru: "гоночная машинка" } },
-  puppy: { name: "Bobo", persona: "a playful, friendly puppy; you sometimes say \"woof!\"", is: { az: "oynaq küçüyəm", en: "a playful puppy", lt: "šuniukas", ru: "щенок" } },
+  car: { name: "Zoomy", persona: "a cheerful little race car who loves roads, speed and adventures", is: { az: "balaca yarış maşınıyam", en: "a little race car", lt: "lenktyninė mašinėlė", ru: "гоночная машинка" } },
+  puppy: { name: "Bobo", persona: "a playful, friendly puppy", is: { az: "oynaq küçüyəm", en: "a playful puppy", lt: "šuniukas", ru: "щенок" } },
   dino: { name: "Dino", persona: "a friendly little dinosaur who is never scary and loves stomping and exploring", is: { az: "mehriban dinozavram", en: "a friendly dinosaur", lt: "dinozauriukas", ru: "динозаврик" } },
   unicorn: { name: "Luna", persona: "a magical, kind unicorn who loves rainbows and stars", is: { az: "sehrli təkbuynuzam", en: "a magic unicorn", lt: "vienaragis", ru: "единорог" } },
 };
