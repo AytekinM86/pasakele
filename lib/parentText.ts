@@ -28,7 +28,7 @@ export type ParentText = {
   downloadReport: string; printHint: string; bookH: (n: string, y: number) => string; coverLine: (s: number, p: number) => string;
   coverTitle: (n: string) => string; bookP: string; downloadBook: string; order: string; orderNote: string; exampleData: string;
   settingsH: string; settingsP: string; storyLang: string; name: string; age: string; save: string; saved: (l: string) => string;
-  footer: string;
+  footer: string; translating: string;
 };
 
 export const P: Record<LangCode, ParentText> = {
@@ -64,6 +64,7 @@ export const P: Record<LangCode, ParentText> = {
     orderNote: "Çap xidməti hələ qoşulmayıb, sifariş verilmədi. Real məhsulda çap partnyoru kitabı göndərəcək.", exampleData: "Bunlar nümunə ailənin məlumatlarıdır.",
     settingsH: "Uşaq ayarları", settingsP: "Bunları yalnız böyüklər dəyişə bilər. Nağıl vaxtında dil seçimi yoxdur, uşaq həmişə sizin seçdiyiniz dili eşidir.",
     storyLang: "Nağıl dili", name: "Ad", age: "Yaş", save: "Yadda saxla", saved: l => `Saxlanıldı. Nağıl dili: ${l}.`,
+    translating: "Əvvəlki qeydlər seçilmiş dilə çevrilir…",
     footer: "Pasakėlė təkrarlanan mövzuları müşahidə edir, diaqnoz qoymur. Yalnız mətn saxlanılır, səs yazısı yoxdur. Nağıllar yalnız bu cihazdakı brauzerdə qalır. Narahat olsanız, uşaqla danışın və lazım gələrsə, uşaq psixoloquna müraciət edin.",
   },
   en: {
@@ -98,6 +99,7 @@ export const P: Record<LangCode, ParentText> = {
     orderNote: "Printing isn't connected yet, so no order was placed. In the real product a print partner ships the book.", exampleData: "These use the example family's data.",
     settingsH: "Child settings", settingsP: "Only grown-ups can change these. Story time has no language switch, so your child always hears the language you choose.",
     storyLang: "Story language", name: "Name", age: "Age", save: "Save", saved: l => `Saved. Story time now uses ${l}.`,
+    translating: "Translating earlier notes into the chosen language…",
     footer: "Pasakėlė notices patterns, it does not diagnose. Only text is kept, no voice recordings. Stories stay in this browser on this device. If something worries you, talk with your child and, if needed, a child psychologist.",
   },
   lt: {
@@ -132,6 +134,7 @@ export const P: Record<LangCode, ParentText> = {
     orderNote: "Spausdinimas dar neprijungtas, užsakymas nepateiktas. Tikrame produkte knygą išsiųs spaustuvė.", exampleData: "Tai pavyzdinės šeimos duomenys.",
     settingsH: "Vaiko nustatymai", settingsP: "Tai gali keisti tik suaugusieji. Pasakų laike kalbos keisti negalima, todėl vaikas visada girdi jūsų pasirinktą kalbą.",
     storyLang: "Pasakų kalba", name: "Vardas", age: "Amžius", save: "Išsaugoti", saved: l => `Išsaugota. Pasakų kalba: ${l}.`,
+    translating: "Ankstesnės pastabos verčiamos į pasirinktą kalbą…",
     footer: "Pasakėlė pastebi pasikartojimus, bet nediagnozuoja. Saugomas tik tekstas, balso įrašų nėra. Pasakos lieka šioje naršyklėje šiame įrenginyje. Jei kas nors neramina, pasikalbėkite su vaiku ir, jei reikia, su vaikų psichologu.",
   },
   ru: {
@@ -166,6 +169,7 @@ export const P: Record<LangCode, ParentText> = {
     orderNote: "Печать пока не подключена, заказ не оформлен. В настоящем продукте книгу отправит типография.", exampleData: "Это данные вымышленной семьи.",
     settingsH: "Настройки ребёнка", settingsP: "Менять их могут только взрослые. Во «Времени сказок» нет выбора языка, ребёнок всегда слышит выбранный вами язык.",
     storyLang: "Язык сказок", name: "Имя", age: "Возраст", save: "Сохранить", saved: l => `Сохранено. Язык сказок: ${l}.`,
+    translating: "Переводим прежние заметки на выбранный язык…",
     footer: "Pasakėlė замечает повторяющиеся темы, но не ставит диагнозов. Хранится только текст, без записей голоса. Сказки остаются в этом браузере на этом устройстве. Если что-то тревожит, поговорите с ребёнком и, при необходимости, с детским психологом.",
   },
 };

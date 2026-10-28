@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element -- stickers are tiny inline SVG data URIs, next/image adds nothing */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { COMPANIONS, COMPANION_IDS, GENDER_TX, LANGS, PICK_FRIEND, SETUP, SPINES, STARTERS, THEMES, TX, continueGreet, detectLang, greet, type Child, type CompanionId, type Gender, type Insight, type LangCode, type Story, type Turn } from "@/lib/data";
+import { COMPANIONS, COMPANION_IDS, GENDER_TX, LANGS, PICK_FRIEND, SETUP, SPINES, STARTERS, THEMES, TX, continueGreet, detectLang, greet, titleOf, type Child, type CompanionId, type Gender, type Insight, type LangCode, type Story, type Turn } from "@/lib/data";
 import { Character } from "./Characters";
 import { ALL_STICKERS, GIFTS, REWARD_TX, giftsFor, stickerSrc, stickersFrom, type GiftId } from "@/lib/rewards";
 import { P } from "@/lib/parentText";
@@ -97,6 +97,7 @@ export default function Pasakele() {
   const saveChild = (c: Child) => { setChild(c); store.saveChild(c); };
   const addStory = (s: Story) => { setStories(prev => { const next = [...prev, s]; store.saveStories(next); return next; }); };
   const saveInsight = (i: Insight) => { setInsight(i); store.saveInsight(i); };
+  const saveStories = (s: Story[]) => { setStories(s); store.saveStories(s); };
 
   const switchMode = (m: Mode) => { setMode(m); audioRef.current?.pause(); try { speechSynthesis.cancel(); } catch { /* none */ } };
 
@@ -112,7 +113,7 @@ export default function Pasakele() {
       <main><div className="wrap">
         {needCode && <CodeForm lang={lang} onDone={() => setNeedCode(false)} />}
         {mode === "parent"
-          ? <ParentArea child={child} stories={stories} insight={insight} onInsight={saveInsight} onChild={saveChild} />
+          ? <ParentArea child={child} stories={stories} insight={insight} onInsight={saveInsight} onChild={saveChild} onStories={saveStories} />
           : !child ? <Setup onDone={saveChild} />
           : <StoryTime child={child} stories={stories} onStory={addStory} speak={speak} canSpeak={serverVoice || !!voice}
               onCompanion={c => saveChild({ ...child, companion: c })}
@@ -348,7 +349,7 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
           <section className="card"><h2>{tx.shelf}</h2>
             <div className="shelf">{stories.slice().reverse().map((s, i) => (
               <button key={s.id} className="spine" style={{ background: SPINES[i % SPINES.length] }} onClick={() => setBook(s)}>
-                {s.title}<small>{dayMonthYear(s.createdAt)}</small></button>))}</div>
+                {titleOf(s, child.lang)}<small>{dayMonthYear(s.createdAt)}</small></button>))}</div>
           </section>
         </aside>
       )}
@@ -372,7 +373,7 @@ export function Book({ story, tx, speak, canSpeak, onClose, banner, onContinue, 
     <div className="book">
       <div className="row" style={{ justifyContent: "space-between" }}><button className="btn" onClick={onClose}>{tx.back}</button>{story.example && <span className="ex">Example story</span>}</div>
       {banner}
-      <h1 style={{ fontSize: "clamp(1.6rem,6vw,2.3rem)" }}>{story.title}</h1>
+      <h1 style={{ fontSize: "clamp(1.6rem,6vw,2.3rem)" }}>{titleOf(story, story.notesLang || story.lang)}</h1>
       <article className="page"><canvas ref={cv} aria-label={`Illustration: ${p.setting} at ${p.time}`} /><p className="txt">{p.text}</p></article>
       <div className="pager">
         <button className="btn" onClick={() => setPage(page - 1)} disabled={page === 0}>{tx.prev}</button>

@@ -69,8 +69,11 @@ export type Story = {
   parentNote: string; foreignWords: ForeignWord[]; concern: "none" | "watch" | "talk";
   words: number; wordList?: string[]; transcript?: Turn[]; example?: boolean;
   prevId?: string; // set when this book continues an earlier one
+  notesLang?: LangCode; shownTitle?: string; // after a language switch: the language of summary/parentNote/characters, and the translated title
 };
-export type Insight = { headline: string; observations: string[]; tryThis: string[]; createdAt?: number; example?: boolean };
+export type Insight = { headline: string; observations: string[]; tryThis: string[]; createdAt?: number; example?: boolean; lang?: LangCode };
+// A book's title in the language the app is set to (translated after a language switch).
+export const titleOf = (s: Story, lang: LangCode) => (s.notesLang === lang && s.shownTitle) || s.title;
 
 export const SPINES = ["#ffd66b", "#9fdcd6", "#f7b4c6", "#b9c9ff", "#c8e6a0", "#ffc29a"];
 

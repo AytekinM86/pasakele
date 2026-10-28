@@ -1,4 +1,4 @@
-import { EMO, type Child, type Insight, type Role, type Story, type Theme } from "./data";
+import { EMO, titleOf, type Child, type Insight, type Role, type Story, type Theme } from "./data";
 import { paint } from "./paint";
 import { REPORT, otherLangName } from "./reportText";
 import { FIGURE_IDS, loadFigures } from "./figures";
@@ -39,11 +39,11 @@ export function reportHTML(list: Story[], child: Child, ins: Insight | null, psy
   ${ins ? `<h2>${t.summary}</h2><p><b>${esc(ins.headline)}</b></p><ul>${ins.observations.map(o => `<li>${esc(o)}</li>`).join("")}</ul>` : ""}
   <h2>${t.themes}</h2><table><tr><th>${t.theme}</th><th>${t.count}</th></tr>${(Object.entries(themeN) as [Theme, number][]).sort((a, b) => b[1] - a[1]).map(([th, n]) => `<tr><td>${esc(t.theme_[th] || th)}</td><td>${n}</td></tr>`).join("")}</table>
   <h2>${t.feelings}</h2><table><tr><th>${t.date}</th><th>${t.story}</th>${EMO.map(e => `<th>${t.emo[e[0]]}</th>`).join("")}</tr>
-    ${list.map(s => `<tr><td>${day(s.createdAt)}</td><td>${esc(s.title)}</td>${EMO.map(e => `<td>${s.emotions?.[e[0]] || 0}</td>`).join("")}</tr>`).join("")}</table>
+    ${list.map(s => `<tr><td>${day(s.createdAt)}</td><td>${esc(titleOf(s, child.lang))}</td>${EMO.map(e => `<td>${s.emotions?.[e[0]] || 0}</td>`).join("")}</tr>`).join("")}</table>
   <h2>${t.characters}</h2><table><tr><th>${t.character}</th><th>${t.role}</th><th>${t.count}</th></tr>${Object.entries(chars).sort((a, b) => b[1].n - a[1].n).map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(t.role_[v.role] || v.role)}</td><td>${v.n}</td></tr>`).join("")}</table>
   <h2>${t.language}</h2><p>${fw.length ? t.foreign(fw.length) : t.allFull}</p>
   ${fw.length ? `<table><tr><th>${t.said}</th><th>${t.otherLang}</th><th>${t.homeWord}</th>${showMeaning ? `<th>${t.meaning}</th>` : ""}<th>${t.story}</th></tr>${fw.map(w => `<tr><td>${esc(w.word)}</td><td>${esc(otherLangName(t, w.lang))}</td><td>${esc(w.native)}</td>${showMeaning ? `<td>${esc(w.gloss)}</td>` : ""}<td>${esc(w.title)}</td></tr>`).join("")}</table>` : ""}
-  <h2>${t.storiesH}</h2>${list.map(s => `<h3>${day(s.createdAt)} · ${esc(s.title)}${s.concern !== "none" ? ` <span class="muted">(${t.concern[s.concern]})</span>` : ""}</h3><p>${esc(s.summary)}</p><p class="muted">${esc(s.parentNote)}</p>`).join("")}`);
+  <h2>${t.storiesH}</h2>${list.map(s => `<h3>${day(s.createdAt)} · ${esc(titleOf(s, child.lang))}${s.concern !== "none" ? ` <span class="muted">(${t.concern[s.concern]})</span>` : ""}</h3><p>${esc(s.summary)}</p><p class="muted">${esc(s.parentNote)}</p>`).join("")}`);
 }
 
 // All stories as one illustrated book, with the cover in the child's story language.

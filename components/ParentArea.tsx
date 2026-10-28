@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { EMO, GENDER_TX, HEAVY, LANGS, ROLE, THEMES, TX, type Child, type Gender, type Insight, type LangCode, type Role, type Setting, type Story } from "@/lib/data";
+import { useEffect, useRef, useState } from "react";
+import { EMO, GENDER_TX, HEAVY, LANGS, ROLE, THEMES, TX, titleOf, type Child, type Gender, type Insight, type LangCode, type Role, type Setting, type Story } from "@/lib/data";
 import { EXAMPLES, EXAMPLE_CHILD, EXAMPLE_INSIGHT } from "@/lib/examples";
 import { bookHTML, download, reportHTML } from "@/lib/reports";
 import { post } from "@/lib/api";
@@ -16,7 +16,7 @@ const shortDate = (t: number, locale: string) => {
   return locale.startsWith("en") ? new Date(t).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : `${dd}.${mm}`;
 };
 
-type Props = { child: Child | null; stories: Story[]; insight: Insight | null; onInsight: (i: Insight) => void; onChild: (c: Child) => void };
+type Props = { child: Child | null; stories: Story[]; insight: Insight | null; onInsight: (i: Insight) => void; onChild: (c: Child) => void; onStories: (s: Story[]) => void };
 
 export function ParentArea(props: Props) {
   const [open, setOpen] = useState(false);
@@ -41,7 +41,8 @@ function Gate({ t, onOpen }: { t: ParentText; onOpen: () => void }) {
   );
 }
 
-function Dashboard({ child: realChild, stories: real, insight: realInsight, onInsight, onChild }: Props) {
+function Dashboard({ child: realChild, stories: real, insight: realInsight, onInsight, onChild, onStories }: Props) {
+  const translating = useTranslateNotes(realChild, real, realInsight, onStories, onInsight);
   const [showExample, setShowExample] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [reading, setReading] = useState<Story | null>(null);
@@ -84,7 +85,7 @@ function Dashboard({ child: realChild, stories: real, insight: realInsight, onIn
       const res = await post("/api/insight", { child: realChild, stories: real.slice(-10).map(s => ({ createdAt: s.createdAt, title: s.title, summary: s.summary, themes: s.themes, emotions: s.emotions, parentNote: s.parentNote })) });
       const r = await res.json();
       if (!res.ok) throw new Error(r.error || t.summaryErr);
-      onInsight({ ...r, createdAt: Date.now() });
+      onInsight({ ...r, createdAt: Date.now(), lang: realChild.lang });
     } catch (e) { if ((e as Error).message !== "🔒") setErr((e as Error).message); }
     setBusy(false);
   }
@@ -97,7 +98,8 @@ function Dashboard({ child: realChild, stories: real, insight: realInsight, onIn
         <h1 style={{ fontSize: "1.8rem" }}>{t.nameAge(child.name, child.age)}</h1>
         {child.note && <p className="muted" style={{ fontSize: ".88rem" }}>{child.note}</p>}</div>
       {!useEx && !list.length && <p className="note">{t.noStories(child.name)}</p>}
-      {talk && <div className="flag" role="alert"><div><b>{t.talkH(child.name, talk.title)}</b><p>{t.talkP}</p></div></div>}
+      {translating && <p className="note" role="status">{t.translating}</p>}
+      {talk && <div className="flag" role="alert"><div><b>{t.talkH(child.name, titleOf(talk, child.lang))}</b><p>{t.talkP}</p></div></div>}
 
       <div className="kpis">{kpis.map(([v, l]) => <div key={l} className="kpi"><b>{v}</b><span>{l}</span></div>)}</div>
 
@@ -133,7 +135,7 @@ function Dashboard({ child: realChild, stories: real, insight: realInsight, onIn
             <span className="dt">{shortDate(s.createdAt, rt.locale)}</span>
             <span style={{ minWidth: 0 }}>
               <button className="stitle" aria-expanded={openId === s.id} onClick={() => setOpenId(openId === s.id ? null : s.id)}>
-                <b>{s.title}</b><br /><span className="muted" style={{ fontSize: ".9rem" }}>{s.summary}</span></button>
+                <b>{titleOf(s, child.lang)}</b><br /><span className="muted" style={{ fontSize: ".9rem" }}>{s.summary}</span></button>
               {openId === s.id && <span style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}>
                 <span className="note"><b>{t.mayShow}</b> {s.parentNote}</span>
                 <span className="row">{s.themes.map(th => <span key={th} className="tag">{rt.theme_[th] || th}</span>)}</span>
@@ -150,6 +152,44 @@ function Dashboard({ child: realChild, stories: real, insight: realInsight, onIn
       {!useEx && <div><button className="btn" onClick={() => { setShowExample(true); window.scrollTo(0, 0); }}>{t.showDemoLong}</button></div>}
     </>
   );
+}
+
+// When the language changes, earlier stories' parent notes, titles and character names (and the summary)
+// are translated once into the new language and saved, so the page is never in two languages.
+function useTranslateNotes(child: Child | null, stories: Story[], insight: Insight | null, onStories: (s: Story[]) => void, onInsight: (i: Insight) => void) {
+  const [busy, setBusy] = useState(false);
+  const tried = useRef("");
+  const lang = child?.lang;
+  const stale = lang ? stories.filter(s => (s.notesLang || s.lang) !== lang) : [];
+  const staleInsight = !!(lang && insight && !insight.example && insight.lang !== lang);
+  const key = lang + ":" + stale.map(s => s.id).join(",") + (staleInsight ? ":i" : "");
+  const latest = useRef({ stories, insight, onStories, onInsight, stale, staleInsight });
+  useEffect(() => { latest.current = { stories, insight, onStories, onInsight, stale, staleInsight }; });
+  useEffect(() => {
+    const { stories, insight, onStories, onInsight, stale, staleInsight } = latest.current;
+    if (!lang || (!stale.length && !staleInsight) || tried.current === key) return;
+    tried.current = key;
+    const items: string[] = [];
+    const take = (x: string) => { items.push(x); return items.length - 1; };
+    const plan = stale.map(s => ({ id: s.id, title: take(s.title), summary: take(s.summary), note: take(s.parentNote), chars: s.characters.map(c => take(c.name)) }));
+    const ins = staleInsight && insight ? { headline: take(insight.headline), obs: insight.observations.map(take), tryThis: insight.tryThis.map(take) } : null;
+    (async () => {
+      setBusy(true);
+      try {
+        const res = await post("/api/translate", { to: lang, items });
+        if (!res.ok) return;
+        const out: string[] = (await res.json()).items;
+        const byId = new Map(plan.map(p => [p.id, p]));
+        onStories(stories.map(s => {
+          const p = byId.get(s.id);
+          return p ? { ...s, notesLang: lang, shownTitle: out[p.title], summary: out[p.summary], parentNote: out[p.note], characters: s.characters.map((c, i) => ({ ...c, name: out[p.chars[i]] })) } : s;
+        }));
+        if (ins && insight) onInsight({ ...insight, lang, headline: out[ins.headline], observations: ins.obs.map(i => out[i]), tryThis: ins.tryThis.map(i => out[i]) });
+      } catch { /* try again next time the page opens */ }
+      finally { setBusy(false); }
+    })();
+  }, [key, lang]);
+  return busy;
 }
 
 function EmotionStrip({ list, lang }: { list: Story[]; lang: LangCode }) {
