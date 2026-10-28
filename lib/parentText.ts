@@ -25,7 +25,7 @@ export type ParentText = {
   groups: Record<Role, string>; settings: Record<Setting, string>;
   storiesH: string; storiesEmpty: string; mayShow: string; readConvo: string; friend: string; openBook: string;
   reportsEb: string; psyH: string; psyP: string; psyLabel: string; psyPh: string; consent: (n: string) => string;
-  downloadReport: string; printHint: string; bookH: (n: string, y: number) => string; coverLine: (s: number, p: number) => string;
+  downloadReport: string; printHint: string; preparing: string; bookH: (n: string, y: number) => string; coverLine: (s: number, p: number) => string;
   coverTitle: (n: string) => string; bookP: string; downloadBook: string; order: string; orderNote: string; exampleData: string;
   settingsH: string; settingsP: string; storyLang: string; name: string; age: string; save: string; saved: (l: string) => string;
   footer: string; translating: string;
@@ -58,7 +58,7 @@ export const P: Record<LangCode, ParentText> = {
     storiesH: "Nağıllar", storiesEmpty: "Hələ bitmiş nağıl yoxdur.", mayShow: "Bu nə göstərə bilər:", readConvo: "Söhbəti oxu", friend: "Dost", openBook: "Kitabı aç",
     reportsEb: "Hesabatlar və xatirələr", psyH: "Psixoloq üçün hesabat", psyP: "Mövzular, hisslər, personajlar və dilin zamanla dəyişməsi haqqında xülasə. Heç nə heç yerə göndərilmir: faylı siz yükləyirsiniz və kimin görəcəyinə özünüz qərar verirsiniz.",
     psyLabel: "Psixoloq (istəyə görə)", psyPh: "Mütəxəssisin adı", consent: n => `Mən ${azGen(n)} valideyni və ya qəyyumuyam və bu hesabatın yuxarıda adı yazılan mütəxəssislə paylaşılmasına razıyam.`,
-    downloadReport: "Hesabatı yüklə", printHint: "Brauzerdə açılır. PDF üçün Print → Save as PDF seçin.",
+    downloadReport: "Hesabatı yüklə", printHint: "PDF faylı kimi yüklənir.", preparing: "PDF hazırlanır…",
     bookH: (n, y) => `${n}: ${y}-ci ilin kitabı`, coverLine: (s, p) => `${s} nağıl · ${p} şəkilli səhifə`, coverTitle: n => `${n}: nağıllar`,
     bookP: "İlin bütün nağılları bir şəkilli kitabda. Nənə və babalar üçün gözəl hədiyyə.", downloadBook: "Kitabı yüklə", order: "Kitab sifariş et · €29",
     orderNote: "Çap xidməti hələ qoşulmayıb, sifariş verilmədi. Real məhsulda çap partnyoru kitabı göndərəcək.", exampleData: "Bunlar nümunə ailənin məlumatlarıdır.",
@@ -93,7 +93,7 @@ export const P: Record<LangCode, ParentText> = {
     storiesH: "Stories", storiesEmpty: "No finished stories yet.", mayShow: "What this may show:", readConvo: "Read the conversation", friend: "Friend", openBook: "Open the book",
     reportsEb: "Reports & keepsakes", psyH: "Report for a psychologist", psyP: "A summary of themes, feelings, characters and language over time, to bring to a child psychologist. Nothing is sent anywhere: you download it and decide who sees it.",
     psyLabel: "Psychologist (optional)", psyPh: "Name of the specialist", consent: n => `I am ${n}'s parent or guardian and I agree to share this report with the specialist named above.`,
-    downloadReport: "Download report", printHint: "Opens in your browser. Use Print → Save as PDF to get a PDF.",
+    downloadReport: "Download report", printHint: "Downloads as a PDF file.", preparing: "Preparing PDF…",
     bookH: (n, y) => `${n}'s Book of ${y}`, coverLine: (s, p) => `${s} stories · ${p} illustrated pages`, coverTitle: n => `${n}'s Stories`,
     bookP: "Every story from the year as one illustrated book. A gift for grandparents.", downloadBook: "Download the book", order: "Order hardcover · €29",
     orderNote: "Printing isn't connected yet, so no order was placed. In the real product a print partner ships the book.", exampleData: "These use the example family's data.",
@@ -128,7 +128,7 @@ export const P: Record<LangCode, ParentText> = {
     storiesH: "Pasakos", storiesEmpty: "Baigtų pasakų dar nėra.", mayShow: "Ką tai gali rodyti:", readConvo: "Skaityti pokalbį", friend: "Draugas", openBook: "Atidaryti knygą",
     reportsEb: "Ataskaitos ir prisiminimai", psyH: "Ataskaita psichologui", psyP: "Temų, jausmų, veikėjų ir kalbos santrauka laikui bėgant. Niekas niekur nesiunčiama: jūs atsisiunčiate failą ir sprendžiate, kas jį matys.",
     psyLabel: "Psichologas (nebūtina)", psyPh: "Specialisto vardas", consent: n => `Esu vaiko (${n}) tėvas, mama ar globėjas ir sutinku pasidalinti šia ataskaita su nurodytu specialistu.`,
-    downloadReport: "Atsisiųsti ataskaitą", printHint: "Atsidaro naršyklėje. PDF gausite pasirinkę Print → Save as PDF.",
+    downloadReport: "Atsisiųsti ataskaitą", printHint: "Atsisiunčiama kaip PDF failas.", preparing: "Ruošiamas PDF…",
     bookH: (n, y) => `${n}: ${y} m. knyga`, coverLine: (s, p) => `Pasakų: ${s} · iliustruotų puslapių: ${p}`, coverTitle: n => `${n}: pasakos`,
     bookP: "Visos metų pasakos vienoje iliustruotoje knygoje. Dovana seneliams.", downloadBook: "Atsisiųsti knygą", order: "Užsakyti knygą · €29",
     orderNote: "Spausdinimas dar neprijungtas, užsakymas nepateiktas. Tikrame produkte knygą išsiųs spaustuvė.", exampleData: "Tai pavyzdinės šeimos duomenys.",
@@ -163,7 +163,7 @@ export const P: Record<LangCode, ParentText> = {
     storiesH: "Сказки", storiesEmpty: "Готовых сказок пока нет.", mayShow: "Что это может показывать:", readConvo: "Читать разговор", friend: "Друг", openBook: "Открыть книжку",
     reportsEb: "Отчёты и память", psyH: "Отчёт для психолога", psyP: "Итог по темам, чувствам, персонажам и языку за время. Ничего никуда не отправляется: вы скачиваете файл и сами решаете, кто его увидит.",
     psyLabel: "Психолог (необязательно)", psyPh: "Имя специалиста", consent: n => `Я родитель или опекун ребёнка (${n}) и согласен(на) поделиться этим отчётом с указанным специалистом.`,
-    downloadReport: "Скачать отчёт", printHint: "Открывается в браузере. Для PDF выберите Print → Save as PDF.",
+    downloadReport: "Скачать отчёт", printHint: "Скачивается как PDF-файл.", preparing: "Готовим PDF…",
     bookH: (n, y) => `${n}: книга ${y} года`, coverLine: (s, p) => `Сказок: ${s} · страниц с картинками: ${p}`, coverTitle: n => `${n}: сказки`,
     bookP: "Все сказки года в одной книжке с картинками. Подарок бабушкам и дедушкам.", downloadBook: "Скачать книжку", order: "Заказать книгу · €29",
     orderNote: "Печать пока не подключена, заказ не оформлен. В настоящем продукте книгу отправит типография.", exampleData: "Это данные вымышленной семьи.",

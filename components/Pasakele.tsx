@@ -371,7 +371,10 @@ export function Book({ story, tx, speak, canSpeak, onClose, banner, onContinue, 
   const last = page === story.pages.length - 1;
   return (
     <div className="book">
-      <div className="row" style={{ justifyContent: "space-between" }}><button className="btn" onClick={onClose}>{tx.back}</button>{story.example && <span className="ex">Example story</span>}</div>
+      <div className="row" style={{ justifyContent: "space-between" }}><button className="btn" onClick={onClose}>{tx.back}</button>
+        {story.example ? <span className="ex">Example story</span>
+          : next && onNext ? <button className="btn teal" onClick={() => onNext(next)}>{tx.nextPart}</button>
+          : onContinue && <button className="btn sun" onClick={onContinue}>{tx.cont}</button>}</div>
       {banner}
       <h1 style={{ fontSize: "clamp(1.6rem,6vw,2.3rem)" }}>{titleOf(story, story.notesLang || story.lang)}</h1>
       <article className="page"><canvas ref={cv} aria-label={`Illustration: ${p.setting} at ${p.time}`} /><p className="txt">{p.text}</p></article>

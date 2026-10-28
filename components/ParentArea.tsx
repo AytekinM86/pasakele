@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { EMO, GENDER_TX, HEAVY, LANGS, ROLE, THEMES, TX, titleOf, type Child, type Gender, type Insight, type LangCode, type Role, type Setting, type Story } from "@/lib/data";
 import { EXAMPLES, EXAMPLE_CHILD, EXAMPLE_INSIGHT } from "@/lib/examples";
-import { bookHTML, download, reportHTML } from "@/lib/reports";
+import { bookHTML, reportHTML } from "@/lib/reports";
+import { downloadPdf } from "@/lib/pdf";
 import { post } from "@/lib/api";
 import { Book } from "./Pasakele";
 import { P, type ParentText } from "@/lib/parentText";
@@ -259,6 +260,8 @@ function Reports({ list, child, ins, useEx, t }: { list: Story[]; child: Child; 
   const [consent, setConsent] = useState(false);
   const [psy, setPsy] = useState("");
   const [ordered, setOrdered] = useState(false);
+  const [making, setMaking] = useState<"" | "report" | "book">("");
+  const makePdf = async (kind: "report" | "book", run: () => Promise<void>) => { setMaking(kind); try { await run(); } finally { setMaking(""); } };
   const year = new Date().getFullYear();
   return (
     <section className="card"><span className="eyebrow">{t.reportsEb}</span>
@@ -267,12 +270,12 @@ function Reports({ list, child, ins, useEx, t }: { list: Story[]; child: Child; 
           <p className="muted" style={{ fontSize: ".9rem" }}>{t.psyP}</p>
           <label className="f">{t.psyLabel}<input id="r-psy" maxLength={60} placeholder={t.psyPh} value={psy} onChange={e => setPsy(e.target.value)} /></label>
           <label className="check"><input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} /> <span>{t.consent(child.name)}</span></label>
-          <div><button className="btn teal" disabled={!consent || !list.length} onClick={() => download(`pasakele-report-${child.name}.html`, reportHTML(list, child, ins, psy.trim()))}>{t.downloadReport}</button></div>
+          <div><button className="btn teal" disabled={!consent || !list.length || !!making} onClick={() => makePdf("report", () => downloadPdf(`pasakele-report-${child.name}.pdf`, reportHTML(list, child, ins, psy.trim())))}>{making === "report" ? t.preparing : t.downloadReport}</button></div>
           <p className="muted" style={{ fontSize: ".8rem" }}>{t.printHint}</p></div>
         <div className="sub"><h3>{t.bookH(child.name, year)}</h3>
           <div className="cover"><div className="cover-in"><small>{t.coverLine(list.length, list.reduce((a, s) => a + s.pages.length, 0))}</small><b>{t.coverTitle(child.name)}</b><small>{year}</small></div></div>
           <p className="muted" style={{ fontSize: ".9rem" }}>{t.bookP}</p>
-          <div className="row"><button className="btn" disabled={!list.length} onClick={async () => download(`${child.name}-stories-${year}.html`, await bookHTML(list, child))}>{t.downloadBook}</button>
+          <div className="row"><button className="btn" disabled={!list.length || !!making} onClick={() => makePdf("book", async () => downloadPdf(`${child.name}-stories-${year}.pdf`, await bookHTML(list, child)))}>{making === "book" ? t.preparing : t.downloadBook}</button>
             <button className="btn sun" onClick={() => setOrdered(true)}>{t.order}</button></div>
           {ordered && <p className="note">{t.orderNote}</p>}</div>
       </div>

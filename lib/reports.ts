@@ -56,10 +56,3 @@ export async function bookHTML(list: Story[], child: Child) {
     s.pages.map((p, i) => { paint(cv, p, (s.createdAt % 997) + i * 31); return `<div class="page"><img src="${cv.toDataURL("image/jpeg", 0.82)}" alt=""><p>${esc(p.text)}</p></div>`; }).join("")).join("");
   return shell(child.lang, `${child.name} · ${t.book} ${year}`, `<div class="page cover"><h1 style="font-size:42px">${esc(child.name)}</h1><p style="font-size:24px;font-family:Arial,sans-serif;margin:6px 0">${t.book} · ${year}</p><p class="muted">${t.bookLine(list.length, child.age)}</p></div>${pages}`);
 }
-
-export function download(filename: string, html: string) {
-  const url = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
-  const a = Object.assign(document.createElement("a"), { href: url, download: filename });
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
-}
