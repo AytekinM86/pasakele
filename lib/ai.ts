@@ -91,6 +91,7 @@ Be warm and observational. Never diagnose or use clinical terms. If something wo
 
 // Maps SDK errors to a short message and status the browser can show.
 export function apiError(error: unknown) {
+  if (!process.env.ANTHROPIC_API_KEY) return { status: 500, message: "The server has no ANTHROPIC_API_KEY. Add it in Vercel → Settings → Environment Variables, then redeploy." };
   if (error instanceof Anthropic.AuthenticationError) return { status: 500, message: "The server's Claude API key is missing or invalid." };
   if (error instanceof Anthropic.RateLimitError) return { status: 429, message: "Too many requests right now. Wait a minute and try again." };
   if (error instanceof Anthropic.BadRequestError) return { status: 400, message: "Claude couldn't process this request." };
