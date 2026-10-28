@@ -258,8 +258,7 @@ function World({ list, t }: { list: Story[]; t: ParentText }) {
 
 function Reports({ list, child, ins, useEx, t }: { list: Story[]; child: Child; ins: Insight | null; useEx: boolean; t: ParentText }) {
   const [consent, setConsent] = useState(false);
-  const [psy, setPsy] = useState("");
-  const [ordered, setOrdered] = useState(false);
+  const [psy, setPsy] = useState("");
   const [making, setMaking] = useState<"" | "report" | "book">("");
   const makePdf = async (kind: "report" | "book", run: () => Promise<void>) => { setMaking(kind); try { await run(); } finally { setMaking(""); } };
   const year = new Date().getFullYear();
@@ -275,9 +274,7 @@ function Reports({ list, child, ins, useEx, t }: { list: Story[]; child: Child; 
         <div className="sub"><h3>{t.bookH(child.name, year)}</h3>
           <div className="cover"><div className="cover-in"><small>{t.coverLine(list.length, list.reduce((a, s) => a + s.pages.length, 0))}</small><b>{t.coverTitle(child.name)}</b><small>{year}</small></div></div>
           <p className="muted" style={{ fontSize: ".9rem" }}>{t.bookP}</p>
-          <div className="row"><button className="btn" disabled={!list.length || !!making} onClick={() => makePdf("book", () => downloadBookPdf(list, child, `${child.name}-stories-${year}.pdf`))}>{making === "book" ? t.preparing : t.downloadBook}</button>
-            <button className="btn sun" onClick={() => setOrdered(true)}>{t.order}</button></div>
-          {ordered && <p className="note">{t.orderNote}</p>}</div>
+          <div className="row"><button className="btn" disabled={!list.length || !!making} onClick={() => makePdf("book", () => downloadBookPdf(list, child, `${child.name}-stories-${year}.pdf`))}>{making === "book" ? t.preparing : t.downloadBook}</button></div></div>
       </div>
       {useEx && <p className="muted" style={{ fontSize: ".8rem" }}>{t.exampleData}</p>}
     </section>

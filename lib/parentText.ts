@@ -26,7 +26,7 @@ export type ParentText = {
   storiesH: string; storiesEmpty: string; mayShow: string; readConvo: string; friend: string; openBook: string;
   reportsEb: string; psyH: string; psyP: string; psyLabel: string; psyPh: string; consent: (n: string) => string;
   downloadReport: string; printHint: string; preparing: string; bookH: (n: string, y: number) => string; coverLine: (s: number, p: number) => string;
-  coverTitle: (n: string) => string; bookP: string; downloadBook: string; order: string; orderNote: string; exampleData: string;
+  coverTitle: (n: string) => string; bookP: string; downloadBook: string; exampleData: string;
   settingsH: string; settingsP: string; storyLang: string; name: string; age: string; save: string; saved: (l: string) => string;
   footer: string; translating: string;
 };
@@ -60,8 +60,7 @@ export const P: Record<LangCode, ParentText> = {
     psyLabel: "Psixoloq (istəyə görə)", psyPh: "Mütəxəssisin adı", consent: n => `Mən ${azGen(n)} valideyni və ya qəyyumuyam və bu hesabatın yuxarıda adı yazılan mütəxəssislə paylaşılmasına razıyam.`,
     downloadReport: "Hesabatı yüklə", printHint: "PDF faylı kimi yüklənir.", preparing: "PDF hazırlanır…",
     bookH: (n, y) => `${n}: ${y}-ci ilin kitabı`, coverLine: (s, p) => `${s} nağıl · ${p} şəkilli səhifə`, coverTitle: n => `${n}: nağıllar`,
-    bookP: "İlin bütün nağılları bir şəkilli kitabda. Nənə və babalar üçün gözəl hədiyyə.", downloadBook: "Kitabı yüklə", order: "Kitab sifariş et · €29",
-    orderNote: "Çap xidməti hələ qoşulmayıb, sifariş verilmədi. Real məhsulda çap partnyoru kitabı göndərəcək.", exampleData: "Bunlar nümunə ailənin məlumatlarıdır.",
+    bookP: "İlin bütün nağılları bir şəkilli kitabda. Nənə və babalar üçün gözəl hədiyyə.", downloadBook: "Kitabı yüklə", exampleData: "Bunlar nümunə ailənin məlumatlarıdır.",
     settingsH: "Uşaq ayarları", settingsP: "Bunları yalnız böyüklər dəyişə bilər. Nağıl vaxtında dil seçimi yoxdur, uşaq həmişə sizin seçdiyiniz dili eşidir.",
     storyLang: "Nağıl dili", name: "Ad", age: "Yaş", save: "Yadda saxla", saved: l => `Saxlanıldı. Nağıl dili: ${l}.`,
     translating: "Əvvəlki qeydlər seçilmiş dilə çevrilir…",
@@ -95,8 +94,7 @@ export const P: Record<LangCode, ParentText> = {
     psyLabel: "Psychologist (optional)", psyPh: "Name of the specialist", consent: n => `I am ${n}'s parent or guardian and I agree to share this report with the specialist named above.`,
     downloadReport: "Download report", printHint: "Downloads as a PDF file.", preparing: "Preparing PDF…",
     bookH: (n, y) => `${n}'s Book of ${y}`, coverLine: (s, p) => `${s} stories · ${p} illustrated pages`, coverTitle: n => `${n}'s Stories`,
-    bookP: "Every story from the year as one illustrated book. A gift for grandparents.", downloadBook: "Download the book", order: "Order hardcover · €29",
-    orderNote: "Printing isn't connected yet, so no order was placed. In the real product a print partner ships the book.", exampleData: "These use the example family's data.",
+    bookP: "Every story from the year as one illustrated book. A gift for grandparents.", downloadBook: "Download the book", exampleData: "These use the example family's data.",
     settingsH: "Child settings", settingsP: "Only grown-ups can change these. Story time has no language switch, so your child always hears the language you choose.",
     storyLang: "Story language", name: "Name", age: "Age", save: "Save", saved: l => `Saved. Story time now uses ${l}.`,
     translating: "Translating earlier notes into the chosen language…",
@@ -130,8 +128,7 @@ export const P: Record<LangCode, ParentText> = {
     psyLabel: "Psichologas (nebūtina)", psyPh: "Specialisto vardas", consent: n => `Esu vaiko (${n}) tėvas, mama ar globėjas ir sutinku pasidalinti šia ataskaita su nurodytu specialistu.`,
     downloadReport: "Atsisiųsti ataskaitą", printHint: "Atsisiunčiama kaip PDF failas.", preparing: "Ruošiamas PDF…",
     bookH: (n, y) => `${n}: ${y} m. knyga`, coverLine: (s, p) => `Pasakų: ${s} · iliustruotų puslapių: ${p}`, coverTitle: n => `${n}: pasakos`,
-    bookP: "Visos metų pasakos vienoje iliustruotoje knygoje. Dovana seneliams.", downloadBook: "Atsisiųsti knygą", order: "Užsakyti knygą · €29",
-    orderNote: "Spausdinimas dar neprijungtas, užsakymas nepateiktas. Tikrame produkte knygą išsiųs spaustuvė.", exampleData: "Tai pavyzdinės šeimos duomenys.",
+    bookP: "Visos metų pasakos vienoje iliustruotoje knygoje. Dovana seneliams.", downloadBook: "Atsisiųsti knygą", exampleData: "Tai pavyzdinės šeimos duomenys.",
     settingsH: "Vaiko nustatymai", settingsP: "Tai gali keisti tik suaugusieji. Pasakų laike kalbos keisti negalima, todėl vaikas visada girdi jūsų pasirinktą kalbą.",
     storyLang: "Pasakų kalba", name: "Vardas", age: "Amžius", save: "Išsaugoti", saved: l => `Išsaugota. Pasakų kalba: ${l}.`,
     translating: "Ankstesnės pastabos verčiamos į pasirinktą kalbą…",
@@ -165,8 +162,7 @@ export const P: Record<LangCode, ParentText> = {
     psyLabel: "Психолог (необязательно)", psyPh: "Имя специалиста", consent: n => `Я родитель или опекун ребёнка (${n}) и согласен(на) поделиться этим отчётом с указанным специалистом.`,
     downloadReport: "Скачать отчёт", printHint: "Скачивается как PDF-файл.", preparing: "Готовим PDF…",
     bookH: (n, y) => `${n}: книга ${y} года`, coverLine: (s, p) => `Сказок: ${s} · страниц с картинками: ${p}`, coverTitle: n => `${n}: сказки`,
-    bookP: "Все сказки года в одной книжке с картинками. Подарок бабушкам и дедушкам.", downloadBook: "Скачать книжку", order: "Заказать книгу · €29",
-    orderNote: "Печать пока не подключена, заказ не оформлен. В настоящем продукте книгу отправит типография.", exampleData: "Это данные вымышленной семьи.",
+    bookP: "Все сказки года в одной книжке с картинками. Подарок бабушкам и дедушкам.", downloadBook: "Скачать книжку", exampleData: "Это данные вымышленной семьи.",
     settingsH: "Настройки ребёнка", settingsP: "Менять их могут только взрослые. Во «Времени сказок» нет выбора языка, ребёнок всегда слышит выбранный вами язык.",
     storyLang: "Язык сказок", name: "Имя", age: "Возраст", save: "Сохранить", saved: l => `Сохранено. Язык сказок: ${l}.`,
     translating: "Переводим прежние заметки на выбранный язык…",
