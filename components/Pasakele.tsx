@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { GREET, LANGS, SETUP, SPINES, STARTERS, THEMES, TX, type Child, type Insight, type LangCode, type Story, type Turn } from "@/lib/data";
 import { store } from "@/lib/store";
 import { paint } from "@/lib/paint";
+import { NEED_CODE, post } from "@/lib/api";
 import { ParentArea } from "./ParentArea";
 
 type Mode = "child" | "parent";
@@ -26,6 +27,13 @@ export default function Pasakele() {
   const [insight, setInsight] = useState<Insight | null>(store.insight);
   const [speakOn, setSpeakOn] = useState(store.speak);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>(() => ("speechSynthesis" in window ? speechSynthesis.getVoices() : []));
+
+  const [needCode, setNeedCode] = useState(false);
+  useEffect(() => {
+    const ask = () => setNeedCode(true);
+    window.addEventListener(NEED_CODE, ask);
+    return () => window.removeEventListener(NEED_CODE, ask);
+  }, []);
 
   useEffect(() => {
     if (!("speechSynthesis" in window)) return;
@@ -57,6 +65,7 @@ export default function Pasakele() {
         </div>
       </div></header>
       <main><div className="wrap">
+        {needCode && <CodeForm onDone={() => setNeedCode(false)} />}
         {mode === "parent"
           ? <ParentArea child={child} stories={stories} insight={insight} onInsight={saveInsight} onChild={saveChild} />
           : !child ? <Setup onDone={saveChild} />
@@ -64,6 +73,22 @@ export default function Pasakele() {
               speakOn={speakOn} setSpeakOn={v => { setSpeakOn(v); store.saveSpeak(v); if (!v) try { speechSynthesis.cancel(); } catch { /* none */ } }} />}
       </div></main>
     </>
+  );
+}
+
+// Shown when the server asks for the family code (APP_ACCESS_CODE). Entered once per device by a parent.
+function CodeForm({ onDone }: { onDone: () => void }) {
+  const [code, setCode] = useState("");
+  return (
+    <section className="card" role="dialog" aria-labelledby="code-h" style={{ borderColor: "var(--sun)", borderWidth: 2 }}>
+      <span className="eyebrow">For parents</span><h2 id="code-h">Enter the family code</h2>
+      <p className="muted">This keeps strangers from using the app. A parent enters the code once on each device. Ailə kodunu bir dəfə daxil edin.</p>
+      <form className="row" onSubmit={e => { e.preventDefault(); if (code.trim()) { store.saveCode(code.trim()); onDone(); } }}>
+        <input id="family-code" className="gate-input" style={{ width: 200 }} type="password" autoComplete="off" aria-label="Family code" value={code} onChange={e => setCode(e.target.value)} />
+        <button className="btn teal">Save</button>
+      </form>
+      <p className="muted" style={{ fontSize: ".85rem" }}>After saving, tap the button you tried again.</p>
+    </section>
   );
 }
 
@@ -133,7 +158,7 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
     const history: Turn[] = [...chat, { role: "user", content: text }];
     setChat([...history, { role: "assistant", content: "…" }]); setDraft(""); setBusy(true); setErr("");
     try {
-      const res = await fetch("/api/chat", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ child, messages: history, knownCharacters: known }) });
+      const res = await post("/api/chat", { child, messages: history, knownCharacters: known });
       if (!res.ok || !res.body) throw new Error((await res.json().catch(() => null))?.error || "The owl couldn't answer just now. Try again.");
       const reader = res.body.getReader(), dec = new TextDecoder();
       let reply = "";
@@ -157,7 +182,7 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
     if (kidLines.join(" ").split(/\s+/).length < 8) { setErr(tx.more); return; }
     setBusy(true); setMaking(true); setErr("");
     try {
-      const res = await fetch("/api/story", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ child, transcript: chat.slice(-60) }) });
+      const res = await post("/api/story", { child, transcript: chat.slice(-60) });
       const r = await res.json();
       if (!res.ok) throw new Error(r.error || "The book couldn't be made. Try again.");
       const words = new Set(kidLines.join(" ").toLowerCase().match(/[\p{L}']+/gu) || []);

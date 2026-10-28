@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { client, CHAT_MODEL, ChildSchema, TurnSchema, listenerSystem, apiError } from "@/lib/ai";
+import { denied } from "@/lib/access";
 
 const Body = z.object({
   child: ChildSchema,
@@ -9,6 +10,8 @@ const Body = z.object({
 
 // Streams the owl's short reply as plain text.
 export async function POST(request: Request) {
+  const blocked = denied(request);
+  if (blocked) return blocked;
   const parsed = Body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Invalid request." }, { status: 400 });
   const { child, messages, knownCharacters } = parsed.data;

@@ -11,6 +11,8 @@ export const store = {
   saveStories: (s: Story[]) => set("stories", s),
   insight: () => get<Insight | null>("insight", null),
   saveInsight: (i: Insight) => set("insight", i),
+  code: () => get<string>("code", ""),
+  saveCode: (c: string) => set("code", c),
   speak: () => get<boolean>("speak", true),
   saveSpeak: (v: boolean) => set("speak", v),
 };

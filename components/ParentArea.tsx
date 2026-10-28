@@ -4,6 +4,7 @@ import { useState } from "react";
 import { EMO, HEAVY, LANGS, ROLE, THEMES, TX, type Child, type Insight, type LangCode, type Role, type Story } from "@/lib/data";
 import { EXAMPLES, EXAMPLE_CHILD, EXAMPLE_INSIGHT } from "@/lib/examples";
 import { bookHTML, download, reportHTML } from "@/lib/reports";
+import { post } from "@/lib/api";
 import { Book } from "./Pasakele";
 
 const DAY = 864e5;
@@ -65,8 +66,7 @@ function Dashboard({ child: realChild, stories: real, insight: realInsight, onIn
     if (!realChild) return;
     setBusy(true); setErr("");
     try {
-      const res = await fetch("/api/insight", { method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ child: realChild, stories: real.slice(-10).map(s => ({ createdAt: s.createdAt, title: s.title, summary: s.summary, themes: s.themes, emotions: s.emotions, parentNote: s.parentNote })) }) });
+      const res = await post("/api/insight", { child: realChild, stories: real.slice(-10).map(s => ({ createdAt: s.createdAt, title: s.title, summary: s.summary, themes: s.themes, emotions: s.emotions, parentNote: s.parentNote })) });
       const r = await res.json();
       if (!res.ok) throw new Error(r.error || "The summary couldn't be made. Try again.");
       onInsight({ ...r, createdAt: Date.now() });

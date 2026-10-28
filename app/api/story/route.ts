@@ -1,11 +1,14 @@
 import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { client, ANALYSIS_MODEL, ChildSchema, TurnSchema, StorySchema, storyPrompt, apiError } from "@/lib/ai";
+import { denied } from "@/lib/access";
 
 const Body = z.object({ child: ChildSchema, transcript: z.array(TurnSchema).min(1).max(60) });
 
 // Turns a finished conversation into a picture book plus gentle analysis for the parent.
 export async function POST(request: Request) {
+  const blocked = denied(request);
+  if (blocked) return blocked;
   const parsed = Body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Invalid request." }, { status: 400 });
   const { child, transcript } = parsed.data;

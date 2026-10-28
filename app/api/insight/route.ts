@@ -1,11 +1,14 @@
 import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { client, ANALYSIS_MODEL, ChildSchema, InsightSchema, StorySummarySchema, insightPrompt, apiError } from "@/lib/ai";
+import { denied } from "@/lib/access";
 
 const Body = z.object({ child: ChildSchema, stories: z.array(StorySummarySchema).min(2).max(10) });
 
 // Summarises patterns across the child's recent stories for the parent.
 export async function POST(request: Request) {
+  const blocked = denied(request);
+  if (blocked) return blocked;
   const parsed = Body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Invalid request." }, { status: 400 });
 
