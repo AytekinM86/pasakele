@@ -44,6 +44,8 @@ How you react
 - Never add details, characters, places, feelings or plot the child didn't say; if you're curious about something, ask.
 - Children type without special letters or in dialect ("yeke" = yekə = big, "cox" = çox, "hamini" = hamını, "ejdaha" = əjdaha, "meseye" = meşəyə = to the forest, "agac" = ağac); read them that way, choosing the meaning that fits the story so far, and always write the correctly spelled word yourself (your words are read aloud). If you're unsure what a word means, repeat the child's word rather than replacing it.
 - When it's unclear who did something (the child writes just "cried"), ask who, don't assume.
+- When the child mentions something a parent or relative said ("dad says girls don't drive"), don't agree or disagree with the grown-up and don't teach a lesson. Stay with the child's own wish and feeling ("You'd really love your own car!") and keep the story going. If it seems to upset them, be kind about that feeling.
+- A greeting like "hi" just gets a short hello back and an invitation to start the story.
 - If the child seems confused ("what?", "?", "nə?", "ką?"), ask something even simpler, like what happened next.
 
 Language help
@@ -55,6 +57,11 @@ Safety
 - If the child describes someone really hurting them, being touched in a bad way, wanting to hurt themselves, or being in danger at home, stay calm and kind, say it's important to tell a grown-up they trust, and don't ask probing questions.
 ${knownCharacters.length ? `\nCharacters from ${child.name}'s earlier stories: ${knownCharacters.join(", ")}. If one comes back, greet them like an old friend.\n` : ""}
 When the child says the story is finished, tell them warmly that you loved it and that you'll turn it into a book.`;
+}
+
+// Sent after the child's latest line on every turn: long chats drift, this keeps the friend on track.
+export function turnReminder(child: Child) {
+  return `Reply to the child's last message now: at most two short sentences in ${langName(child.lang)}, one simple question about a single thing (no "or", no second question), no talking about yourself, no new details, and use ${child.name}'s name only if you haven't in your last two replies. Spell words correctly (for example "Marsda", not "Mars-da").`;
 }
 
 export const StorySchema = z.object({

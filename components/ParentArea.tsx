@@ -161,7 +161,7 @@ function EmotionStrip({ list, lang }: { list: Story[]; lang: LangCode }) {
         <g key={k}><text x="0" y={r * 30 + 20} fontSize="12" fill="var(--muted)">{l}</text>
           <line x1={lw} x2={W - 6} y1={r * 30 + 16} y2={r * 30 + 16} stroke="var(--line)" />
           {list.map((s, i) => { const v = +(s.emotions?.[k] || 0); return v ? <circle key={s.id} cx={lw + i * cw + cw / 2} cy={r * 30 + 16} r={3 + v * 3.2} fill={`var(${c})`}><title>{`${s.title}: ${l} ${v}/3`}</title></circle> : null; })}</g>); })}
-      {list.map((s, i) => <text key={s.id} x={lw + i * cw + cw / 2} y={H - 4} fontSize="10" textAnchor="middle" fill="var(--muted)">{new Date(s.createdAt).toLocaleDateString(rt.locale, { day: "numeric", month: "numeric" })}</text>)}
+      {list.map((s, i) => <text key={s.id} x={lw + i * cw + cw / 2} y={H - 4} fontSize="10" textAnchor="middle" fill="var(--muted)">{shortDate(s.createdAt, rt.locale)}</text>)}
     </svg>
   );
 }

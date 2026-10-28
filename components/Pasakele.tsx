@@ -162,6 +162,8 @@ const VOICE_TAG = /\[[a-zA-Z ]{2,20}\]\s*/g;
 const forSpeech = (t: string) => t.replace(/[*_#`]+/g, "").trim();
 const plain = (t: string) => forSpeech(t).replace(VOICE_TAG, "").replace(/\[[a-zA-Z ]*$/, "");
 
+const dayMonthYear = (t: number) => { const d = new Date(t); return [d.getDate(), d.getMonth() + 1].map(x => String(x).padStart(2, "0")).join(".") + "." + d.getFullYear(); };
+
 function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeakOn, onCompanion }: {
   child: Child; stories: Story[]; onStory: (s: Story) => void; speak: (t: string) => void;
   canSpeak: boolean; speakOn: boolean; setSpeakOn: (v: boolean) => void; onCompanion: (c: CompanionId) => void;
@@ -296,10 +298,10 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
       </div>
       {!canSpeak && <p className="note">{tx.novoice}</p>}
       {stories.length > 0 && (
-        <section className="card"><h2 style={{ fontSize: "1.3rem" }}>{child.name}{tx.shelf}</h2>
+        <section className="card"><h2 style={{ fontSize: "1.3rem" }}>{tx.shelf}</h2>
           <div className="shelf">{stories.slice().reverse().map((s, i) => (
             <button key={s.id} className="spine" style={{ background: SPINES[i % SPINES.length] }} onClick={() => setBook(s)}>
-              {s.title}<small>{new Date(s.createdAt).toLocaleDateString()}</small></button>))}</div>
+              {s.title}<small>{dayMonthYear(s.createdAt)}</small></button>))}</div>
         </section>
       )}
     </>

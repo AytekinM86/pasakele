@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { client, CHAT_MODEL, ChildSchema, CompanionSchema, TurnSchema, listenerSystem, apiError } from "@/lib/ai";
+import { client, CHAT_MODEL, ChildSchema, CompanionSchema, TurnSchema, listenerSystem, turnReminder, apiError } from "@/lib/ai";
 import { denied } from "@/lib/access";
 
 const Body = z.object({
@@ -24,7 +24,8 @@ export async function POST(request: Request) {
       max_tokens: 1024,
       output_config: { effort: "medium" },
       system: listenerSystem(child, knownCharacters, companion),
-      messages,
+      // A short operator reminder after the child's latest line keeps long chats as short and gentle as the first turns.
+      messages: [...messages, { role: "system", content: turnReminder(child) }],
     });
     await stream.withResponse(); // surfaces auth / rate-limit errors before we start the response
 

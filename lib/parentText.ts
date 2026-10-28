@@ -1,5 +1,11 @@
 import type { LangCode, Role, Setting } from "./data";
 
+// Azerbaijani case endings for a child's name, following vowel harmony: Dilara → Dilaranın / Dilaraya, Aytən → Aytənin / Aytənə.
+const lastVowel = (n: string) => (n.toLowerCase().match(/[aıoueəiöü](?=[^aıoueəiöü]*$)/) || ["ə"])[0];
+const endsInVowel = (n: string) => /[aıoueəiöü]$/i.test(n);
+export const azGen = (n: string) => n + (endsInVowel(n) ? "n" : "") + ({ a: "ın", ı: "ın", o: "un", u: "un", e: "in", ə: "in", i: "in", ö: "ün", ü: "ün" } as Record<string, string>)[lastVowel(n)];
+export const azDat = (n: string) => n + (endsInVowel(n) ? "y" : "") + ("aıou".includes(lastVowel(n)) ? "a" : "ə");
+
 // Parent-area words in the child's story language (the parent picked it, so they read it too).
 export type ParentText = {
   storyTime: string; forParents: string;
@@ -32,10 +38,10 @@ export const P: Record<LangCode, ParentText> = {
     noChildH: "Hələ uşaq profili yoxdur", noChildP: "Nağıl vaxtı bölməsini açın, uşağın adını və dilini yazın, ilk nağıldan sonra bura qayıdın.",
     showDemo: "Nümunə ailəni göstər (uydurma)", showDemoLong: "Nümunə ailəni göstər (uydurma, təqdimat üçün)",
     demoBanner: "NÜMUNƏ · uydurma ailə, sizin uşağınız deyil.", demoBannerP: "Aşağıdakı hər şey səhifənin necə işlədiyini göstərmək üçün uydurulub.",
-    backTo: n => `${n}-ya qayıt`, closeDemo: "Nümunəni bağla",
-    insights: "Nağıl müşahidələri", nameAge: (n, a) => `${n}, ${a} yaş`, noStories: n => `Hələ nağıl yoxdur. Bu səhifədəki hər şey ${n}-nın öz nağıllarından yaranır və hər bitmiş kitabdan sonra dolur.`,
+    backTo: n => `${azDat(n)} qayıt`, closeDemo: "Nümunəni bağla",
+    insights: "Nağıl müşahidələri", nameAge: (n, a) => `${n}, ${a} yaş`, noStories: n => `Hələ nağıl yoxdur. Bu səhifədəki hər şey ${azGen(n)} öz nağıllarından yaranır və hər bitmiş kitabdan sonra dolur.`,
     kStories: "nağıl", kWeek: "bu həftə", kWords: "bir nağılda söz", kDifferent: "fərqli söz",
-    month: "Bu ay", noSummary: "Hələ xülasə yoxdur", needTwo: (n, k) => `Xülasə üçün ən azı 2 nağıl lazımdır. ${n}-nın ${k} nağılı var.`, genHint: n => `${n}-nın nağıllarındakı təkrarlanan mövzuların xülasəsini yaradın.`,
+    month: "Bu ay", noSummary: "Hələ xülasə yoxdur", needTwo: (n, k) => `Xülasə üçün ən azı 2 nağıl lazımdır. ${azGen(n)} ${k} nağılı var.`, genHint: n => `${azGen(n)} nağıllarındakı təkrarlanan mövzuların xülasəsini yaradın.`,
     tryThis: "Bunu sınayın:", reading: "Nağıllar oxunur…", refresh: "Xülasəni yenilə", generate: "Xülasə yarat", summaryErr: "Xülasə yaradıla bilmədi. Yenidən cəhd edin.",
     radarEb: "Ana dili radarı", radarH: k => `${k} söz başqa dildə deyilib`, radarAll: () => "Bütün nağıllar tam seçilmiş dildə danışılıb",
     radarP: r => `Onlardan ${r}-i son 14 gündə. Bunlar çox vaxt bağçadan və ya məktəbdən gələn sözlərdir. Dost növbəti cavabında həmin sözü düzəltmədən öz dilimizdə işlədir.`,
@@ -51,7 +57,7 @@ export const P: Record<LangCode, ParentText> = {
     settings: { forest: "meşə", sea: "dəniz", space: "kosmos", castle: "qala", city: "şəhər", home: "ev", meadow: "çəmən", sky: "göy" },
     storiesH: "Nağıllar", storiesEmpty: "Hələ bitmiş nağıl yoxdur.", mayShow: "Bu nə göstərə bilər:", readConvo: "Söhbəti oxu", friend: "Dost", openBook: "Kitabı aç",
     reportsEb: "Hesabatlar və xatirələr", psyH: "Psixoloq üçün hesabat", psyP: "Mövzular, hisslər, personajlar və dilin zamanla dəyişməsi haqqında xülasə. Heç nə heç yerə göndərilmir: faylı siz yükləyirsiniz və kimin görəcəyinə özünüz qərar verirsiniz.",
-    psyLabel: "Psixoloq (istəyə görə)", psyPh: "Mütəxəssisin adı", consent: n => `Mən ${n}-nın valideyni və ya qəyyumuyam və bu hesabatın yuxarıda adı yazılan mütəxəssislə paylaşılmasına razıyam.`,
+    psyLabel: "Psixoloq (istəyə görə)", psyPh: "Mütəxəssisin adı", consent: n => `Mən ${azGen(n)} valideyni və ya qəyyumuyam və bu hesabatın yuxarıda adı yazılan mütəxəssislə paylaşılmasına razıyam.`,
     downloadReport: "Hesabatı yüklə", printHint: "Brauzerdə açılır. PDF üçün Print → Save as PDF seçin.",
     bookH: (n, y) => `${n}: ${y}-ci ilin kitabı`, coverLine: (s, p) => `${s} nağıl · ${p} şəkilli səhifə`, coverTitle: n => `${n}: nağıllar`,
     bookP: "İlin bütün nağılları bir şəkilli kitabda. Nənə və babalar üçün gözəl hədiyyə.", downloadBook: "Kitabı yüklə", order: "Kitab sifariş et · €29",
