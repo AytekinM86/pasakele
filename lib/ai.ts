@@ -98,7 +98,7 @@ ${transcript.map(m => (m.role === "user" ? "Child: " : "Story friend: ") + m.con
 
 Fill in the fields:
 - title: short, in ${L}.
-- pages: 3-5 pages retelling the CHILD's story in ${L}, one or two sentences each, close to the child's own words and ideas, lightly polished, nothing added. characters: 1-3 picture ids for who or what is on that page, chosen from: ${FIGURE_IDS.join(", ")} (when the child tells the story as "I", draw them as ${child.gender ?? "girl or boy, whichever the story makes clear"}; a big truck like a Kamaz is truck). Only for an object that isn't in that list (a key, a cake, a tree) use a single emoji instead.
+- pages: 3-5 pages retelling the CHILD's story in ${L}, one or two sentences each, close to the child's own words and ideas, lightly polished, nothing added. characters: 1-3 picture ids for who or what is on that page, chosen from: ${FIGURE_IDS.join(", ")} (when the child tells the story as "I", draw them as ${child.gender ?? "girl or boy, whichever the story makes clear"}; a big truck like a Kamaz is truck; in Azerbaijani baba = grandpa, nənə = grandma, ata = dad, ana = mom, so "babam" is grandpa). Use the ids exactly as written. Only for an object that isn't in that list (a key, a cake, a tree) use a single emoji instead, never a word.
 - summary: one sentence in ${L} for the parent.
 - themes: 1-4 themes.
 - emotions: intensity 0-3 of each feeling in the child's story.

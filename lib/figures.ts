@@ -122,6 +122,21 @@ export const FIGURES: Record<string, { svg: string; size: number }> = {
 };
 export const FIGURE_IDS = Object.keys(FIGURES);
 
+// Words the AI sometimes uses instead of our ids. Anything else that is a plain word is skipped, never drawn as text.
+const ALIASES: Record<string, string> = {
+  father: "dad", daddy: "dad", papa: "dad", mother: "mom", mum: "mom", mommy: "mom", mama: "mom",
+  grandfather: "grandpa", granddad: "grandpa", grandmother: "grandma", granny: "grandma",
+  child: "girl", kid: "girl", kitten: "cat", kitty: "cat", puppy: "dog", rabbit: "bunny", hare: "bunny",
+  dino: "dinosaur", lorry: "truck", kamaz: "truck", automobile: "car", horsey: "horse",
+};
+// Returns a figure id, the original emoji, or null when it's an unknown word.
+export function figureFor(raw: string): string | null {
+  const w = raw.trim().toLowerCase();
+  if (FIGURES[w]) return w;
+  if (ALIASES[w]) return ALIASES[w];
+  return /^[\p{L}\s'-]+$/u.test(w) ? null : raw.trim();
+}
+
 // Loaded images, shared by every canvas. load() resolves once all figures can be drawn.
 const cache: Record<string, HTMLImageElement> = {};
 export function figureImage(id: string): HTMLImageElement | null {

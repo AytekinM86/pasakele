@@ -32,6 +32,24 @@ export default function Pasakele() {
   const [speakOn, setSpeakOn] = useState(store.speak);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>(() => ("speechSynthesis" in window ? speechSynthesis.getVoices() : []));
 
+  // When a new version is deployed, an open page refreshes itself the next time it's idle
+  // (no chat in progress, no celebration or dialog), so old screens never talk to a newer server.
+  useEffect(() => {
+    let first: string | null = null;
+    const check = async () => {
+      try {
+        const { v } = await (await fetch("/api/version", { cache: "no-store" })).json();
+        if (first === null) first = v;
+        else if (v !== first && !document.querySelector(".bub.kid, .party, .modal-back, .book")) location.reload();
+      } catch { /* offline: try again later */ }
+    };
+    check();
+    const onShow = () => { if (document.visibilityState === "visible") check(); };
+    document.addEventListener("visibilitychange", onShow);
+    const timer = setInterval(check, 5 * 60 * 1000);
+    return () => { document.removeEventListener("visibilitychange", onShow); clearInterval(timer); };
+  }, []);
+
   const [needCode, setNeedCode] = useState(false);
   useEffect(() => {
     const ask = () => setNeedCode(true);

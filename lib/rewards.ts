@@ -1,5 +1,5 @@
 import type { LangCode, Story } from "./data";
-import { FIGURES, FIGURE_IDS } from "./figures";
+import { FIGURES, FIGURE_IDS, figureFor } from "./figures";
 
 // Rewards stay gentle on purpose: nothing is ever lost, no streaks, no scores.
 // Stickers come from the characters in the child's own stories; friends get presents as the bookshelf grows.
@@ -14,7 +14,7 @@ export const nextGiftIn = (books: number) => { const g = GIFTS.find(g => books <
 
 // Sticker ids collected from all stories' pictures (only drawn figures count, not emoji).
 export const stickersFrom = (stories: Story[]) =>
-  new Set(stories.flatMap(s => s.pages.flatMap(p => p.characters.map(c => c.trim().toLowerCase()))).filter(id => FIGURES[id]));
+  new Set(stories.flatMap(s => s.pages.flatMap(p => p.characters.map(c => figureFor(c) || ""))).filter(id => FIGURES[id]));
 export const ALL_STICKERS = FIGURE_IDS;
 export const stickerSrc = (id: string) => "data:image/svg+xml;charset=utf-8," + encodeURIComponent(FIGURES[id].svg);
 

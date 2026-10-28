@@ -1,5 +1,5 @@
 import type { Page } from "./data";
-import { FIGURES, figureImage } from "./figures";
+import { FIGURES, figureFor, figureImage } from "./figures";
 
 // Deterministic pseudo-random numbers so each page always gets the same picture.
 function rnd(seed: number) {
@@ -45,7 +45,7 @@ export function paint(cv: HTMLCanvasElement, p: Page, seed: number, onReady?: ()
     if (s === "meadow") for (let i = 0; i < 40; i++) { x.fillStyle = ["#ff7aa2", "#ffd34d", "#ffffff", "#b48cff"][i % 4]; x.beginPath(); x.arc(r() * W, 350 + r() * 140, 5, 0, 7); x.fill(); }
   }
 
-  const ch = (p.characters || []).slice(0, 3), n = ch.length;
+  const ch = (p.characters || []).map(figureFor).filter((c): c is string => !!c).slice(0, 3), n = ch.length;
   x.textAlign = "center"; x.textBaseline = "middle";
   let waiting = false;
   ch.forEach((e, i) => {
