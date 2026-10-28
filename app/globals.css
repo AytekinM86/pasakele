@@ -84,6 +84,8 @@ label.f { display: flex; flex-direction: column; gap: 5px; font-weight: 700; fon
 .friends { display: flex; flex-direction: column; gap: 10px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 59px); z-index: 4;
   background: var(--bg); padding-block: 10px; margin-top: -10px; box-shadow: 0 12px 12px -8px var(--bg) }
 .friends h2 { font-size: 1.3rem }
+/* The big picker (before the story starts) scrolls with the page so nothing slides underneath it. */
+.friends:not(.compact) { position: static; box-shadow: none; margin-top: 0; padding-block: 0 }
 .friends.compact h2 { display: none }
 .friends.compact .friend-row { gap: 6px }
 .friends.compact .friend { flex-direction: row; justify-content: center; padding: 4px 6px; border-width: 2px; border-radius: 14px; font-size: .9rem; gap: 6px }
