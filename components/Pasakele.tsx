@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element -- stickers are tiny inline SVG data URIs, next/image adds nothing */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { COMPANIONS, COMPANION_IDS, GENDER_TX, LANGS, PICK_FRIEND, SETUP, SPINES, STARTERS, THEMES, TX, detectLang, greet, type Child, type CompanionId, type Gender, type Insight, type LangCode, type Story, type Turn } from "@/lib/data";
+import { COMPANIONS, COMPANION_IDS, GENDER_TX, LANGS, PICK_FRIEND, SETUP, SPINES, STARTERS, THEMES, TX, continueGreet, detectLang, greet, type Child, type CompanionId, type Gender, type Insight, type LangCode, type Story, type Turn } from "@/lib/data";
 import { Character } from "./Characters";
 import { ALL_STICKERS, GIFTS, REWARD_TX, giftsFor, stickerSrc, stickersFrom, type GiftId } from "@/lib/rewards";
 import { P } from "@/lib/parentText";
@@ -197,6 +197,8 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
   const [err, setErr] = useState("");
   const [book, setBook] = useState<Story | null>(null);
   const [album, setAlbum] = useState(false);
+  const [continuing, setContinuing] = useState<Story | null>(null); // the book whose next part is being told
+  const previous = continuing ? { title: continuing.title, recap: continuing.pages.slice(-3).map(p => p.text).join(" ").slice(0, 1500) } : undefined;
   const [party, setParty] = useState<Celebration | null>(null);
   const rt = REWARD_TX[child.lang], gifts = giftsFor(stories.length);
   const [listening, setListening] = useState(false);
@@ -218,7 +220,7 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
     const history: Turn[] = [...chat, { role: "user", content: text }];
     setChat([...history, { role: "assistant", content: "…" }]); setDraft(""); setBusy(true); setErr("");
     try {
-      const res = await post("/api/chat", { child, companion, messages: history, knownCharacters: known });
+      const res = await post("/api/chat", { child, companion, messages: history, knownCharacters: known, previous });
       if (!res.ok || !res.body) throw new Error((await res.json().catch(() => null))?.error || "The owl couldn't answer just now. Try again.");
       const reader = res.body.getReader(), dec = new TextDecoder();
       let reply = "";
@@ -243,7 +245,7 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
     if (kidLines.join(" ").split(/\s+/).length < 8) { setErr(tx.more); return; }
     setBusy(true); setMaking(true); setErr("");
     try {
-      const res = await post("/api/story", { child, transcript: chat.slice(-60) });
+      const res = await post("/api/story", { child, transcript: chat.slice(-60), previous });
       const r = await res.json();
       if (!res.ok) throw new Error(r.error || "The book couldn't be made. Try again.");
       const words = new Set(kidLines.join(" ").toLowerCase().match(/[\p{L}']+/gu) || []);
@@ -254,13 +256,13 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
         summary: r.summary || "", themes: (r.themes || []).filter((t: string) => (THEMES as readonly string[]).includes(t)).slice(0, 4),
         emotions: r.emotions, characters: (r.characters || []).slice(0, 5), parentNote: r.parentNote || "",
         foreignWords: (r.foreignWords || []).slice(0, 20), concern: r.concern || "none",
-        words: words.size, wordList: [...words].slice(0, 400), transcript: chat.slice(-40),
+        words: words.size, wordList: [...words].slice(0, 400), transcript: chat.slice(-40), prevId: continuing?.id,
       };
       if (!st.pages.length) st.pages = [{ text: kidLines.join(" "), setting: "meadow", time: "day", characters: ["⭐"] }];
       const had = stickersFrom(stories), n = stories.length + 1;
       const fresh = [...stickersFrom([st])].filter(id => !had.has(id));
       const gift = GIFTS.find(g => g.at === n)?.id;
-      onStory(st); setChat([]); setBook(st); setParty({ n, fresh, gift });
+      onStory(st); setChat([]); setContinuing(null); setBook(st); setParty({ n, fresh, gift });
       speak(rt.nthBook(n) + (gift ? " " + rt.present(COMPANIONS[companion].name, rt.gifts[gift]) : ""));
     } catch (e) { if ((e as Error).message !== "🔒") setErr((e as Error).message); }
     setBusy(false); setMaking(false);
@@ -285,6 +287,8 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
   }
 
   if (book) return <Book story={book} tx={tx} speak={speak} canSpeak={canSpeak} onClose={() => { setBook(null); setParty(null); }}
+    onContinue={() => { setContinuing(book); setChat([]); setBook(null); setParty(null); }}
+    next={stories.find(s => s.prevId === book.id)} onNext={s => { setBook(s); setParty(null); }}
     banner={party && <Party party={party} rt={rt} friend={companion} gifts={gifts} />} />;
   const have = stickersFrom(stories);
   if (album) return <Album have={have} rt={rt} back={tx.back} onClose={() => setAlbum(false)} />;
@@ -303,14 +307,14 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
       )}
       <div className={`stage ${busy || listening ? "thinking" : ""}`}><Character id={companion} gifts={gifts} />
         <div className="chat" aria-live="polite">
-          <div className="say-row"><Character id={companion} className="mini" /><div className="bub owl-say">{making ? tx.making : greet(child.lang, child.name, companion)}</div></div>
+          <div className="say-row"><Character id={companion} className="mini" /><div className="bub owl-say">{making ? tx.making : continuing ? continueGreet(child.lang, continuing.title) : greet(child.lang, child.name, companion)}</div></div>
           {chat.map((m, i) => m.role === "user"
             ? <div key={i} className="bub kid">{m.content}</div>
             : <div key={i} className="say-row"><Character id={companion} className="mini" /><div className="bub owl-say">{m.content}</div></div>)}
           <div ref={endRef} style={{ scrollMarginBottom: 200 }} />
         </div>
       </div>
-      {!chat.length && <div className="starters">{STARTERS[child.lang].map(s => <button key={s} className="starter" onClick={() => send(s)}>{s}</button>)}</div>}
+      {!chat.length && !continuing && <div className="starters">{STARTERS[child.lang].map(s => <button key={s} className="starter" onClick={() => send(s)}>{s}</button>)}</div>}
       <div className="dock">
       <div className="composer">
         <button className={`mic ${listening ? "on" : ""}`} onClick={toggleMic} disabled={busy} aria-label={tx.mic} title={tx.mic}>
@@ -324,7 +328,7 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
       <div className="row">
         <button className="btn sun big" onClick={finish} disabled={busy || !chat.length}>{tx.end}</button>
         {canSpeak && <button className="btn" aria-pressed={speakOn} onClick={() => setSpeakOn(!speakOn)}>{speakOn ? tx.on : tx.off}</button>}
-        {chat.length > 0 && <button className="btn" onClick={() => { setChat([]); setErr(""); }}>{tx.again}</button>}
+        {(chat.length > 0 || continuing) && <button className="btn" onClick={() => { setChat([]); setErr(""); setContinuing(null); }}>{tx.again}</button>}
       </div>
       </div>
       {!canSpeak && <p className="note">{tx.novoice}</p>}
@@ -352,7 +356,10 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
   );
 }
 
-export function Book({ story, tx, speak, canSpeak, onClose, banner }: { story: Story; tx: Record<string, string>; speak: (t: string) => void; canSpeak: boolean; onClose: () => void; banner?: React.ReactNode }) {
+export function Book({ story, tx, speak, canSpeak, onClose, banner, onContinue, next, onNext }: {
+  story: Story; tx: Record<string, string>; speak: (t: string) => void; canSpeak: boolean; onClose: () => void; banner?: React.ReactNode;
+  onContinue?: () => void; next?: Story; onNext?: (s: Story) => void;
+}) {
   const [page, setPage] = useState(0);
   const cv = useRef<HTMLCanvasElement>(null);
   const p = story.pages[page] || story.pages[0];
@@ -372,7 +379,11 @@ export function Book({ story, tx, speak, canSpeak, onClose, banner }: { story: S
         <div className="dots">{story.pages.map((_, i) => <i key={i} className={i === page ? "on" : ""} />)}</div>
         <button className="btn sun" onClick={() => { if (last) onClose(); else { setPage(page + 1); speak(story.pages[page + 1].text); } }}>{last ? tx.fin : tx.next}</button>
       </div>
-      {canSpeak && <button className="btn" onClick={() => speak(p.text)}>{tx.read}</button>}
+      <div className="row">
+        {canSpeak && <button className="btn" onClick={() => speak(p.text)}>{tx.read}</button>}
+        {last && next && onNext && <button className="btn teal" onClick={() => onNext(next)}>{tx.nextPart}</button>}
+        {last && !next && onContinue && !story.example && <button className="btn sun" onClick={onContinue}>{tx.cont}</button>}
+      </div>
     </div>
   );
 }

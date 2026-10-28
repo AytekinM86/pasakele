@@ -27,7 +27,11 @@ const langName = (l: LangCode) => LANGS[l].english;
 
 export const CompanionSchema = z.enum(COMPANION_IDS).default("owl");
 
-export function listenerSystem(child: Child, knownCharacters: string[], companion: CompanionId = "owl") {
+// The earlier book when the child is telling its next part.
+export const PreviousSchema = z.object({ title: z.string().max(200), recap: z.string().max(2000) }).optional();
+export type Previous = z.infer<typeof PreviousSchema>;
+
+export function listenerSystem(child: Child, knownCharacters: string[], companion: CompanionId = "owl", previous?: Previous) {
   const L = langName(child.lang);
   const { name, persona } = COMPANIONS[companion];
   return `You are ${name}, ${persona}, and a real friend to a ${child.age}-year-old ${child.gender ?? "child"} named ${child.name}. You love making up stories together, and the child is the author of those stories. But you are a friend first and a storyteller second: when the child shares how they feel, that comes before any story.
@@ -71,6 +75,7 @@ Safety
   - Let the child lead; it's fine to stay with the memory instead of the story.
 - If the child wishes to run away or for nobody to find them, stay calm and kind, don't make it bigger and don't encourage it; gently ask how they feel.
 ${knownCharacters.length ? `\nCharacters from ${child.name}'s earlier stories: ${knownCharacters.join(", ")}. If one comes back, greet them like an old friend.\n` : ""}
+${previous ? `\nThis is the next part of ${child.name}'s earlier story "${previous.title}". It ended like this: ${previous.recap}\nYou remember it well: help the child carry on from where it ended, with the same characters, but let them decide what happens.\n` : ""}
 When the child says the story is finished, tell them warmly that you loved it and that you'll turn it into a book.`;
 }
 
@@ -96,13 +101,13 @@ export const StorySchema = z.object({
   concern: z.enum(["none", "watch", "talk"]),
 });
 
-export function storyPrompt(child: Child, transcript: z.infer<typeof TurnSchema>[]) {
+export function storyPrompt(child: Child, transcript: z.infer<typeof TurnSchema>[], previous?: Previous) {
   const L = langName(child.lang);
   return `A ${child.age}-year-old ${child.gender ?? "child"} named ${child.name} invented a story while talking to a listening story friend. Conversation (Child = author):
 ${transcript.map(m => (m.role === "user" ? "Child: " : "Story friend: ") + m.content).join("\n")}
 
 Fill in the fields:
-- title: short, in ${L}.
+- title: short, in ${L}.${previous ? ` This is the next part of the earlier book "${previous.title}" (which ended: ${previous.recap}). Give it the same title followed by the part number, for example "${previous.title} 2" (or the next number if the earlier title already ends in a number). The pages retell only this new part.` : ""}
 - pages: 3-5 pages retelling the CHILD's story in ${L}, one or two sentences each, close to the child's own words and ideas, lightly polished, nothing added. characters: 1-3 picture ids for who or what is on that page, chosen from: ${FIGURE_IDS.join(", ")} (when the child tells the story as "I", draw them as ${child.gender ?? "girl or boy, whichever the story makes clear"}; a big truck like a Kamaz is truck; in Azerbaijani baba = grandpa, nənə = grandma, ata = dad, ana = mom, so "babam" is grandpa). Use the ids exactly as written. Only for an object that isn't in that list (a key, a cake, a tree) use a single emoji instead, never a word.
 - summary: one sentence in ${L} for the parent.
 - themes: 1-4 themes.

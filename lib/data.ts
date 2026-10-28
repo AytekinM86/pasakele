@@ -68,6 +68,7 @@ export type Story = {
   themes: Theme[]; emotions: Record<EmotionKey, number>; characters: { name: string; role: Role }[];
   parentNote: string; foreignWords: ForeignWord[]; concern: "none" | "watch" | "talk";
   words: number; wordList?: string[]; transcript?: Turn[]; example?: boolean;
+  prevId?: string; // set when this book continues an earlier one
 };
 export type Insight = { headline: string; observations: string[]; tryThis: string[]; createdAt?: number; example?: boolean };
 
@@ -82,11 +83,20 @@ export const STARTERS: Record<LangCode, string[]> = {
 
 // Child-facing words in the chosen language.
 export const TX: Record<LangCode, Record<string, string>> = {
-  az: { tell: "Danış", ph: "Nağılını danış…", end: "Bitdi! Kitabımı düzəlt", on: "Səs: açıq", off: "Səs: bağlı", again: "Yenidən başla", shelf: "Kitab rəfim", making: "Kitabın hazırlanır… ✨", back: "Geri", prev: "Əvvəlki səhifə", next: "Növbəti səhifə", fin: "Son", read: "Bu səhifəni mənə oxu", more: "Dostuna bir az da danış, sonra kitabını düzəldək.", novoice: "Bu cihazda azərbaycanca səs yoxdur, ona görə dostun yazı ilə cavab verir.", mic: "Danışmaq üçün bas", listening: "Dinləyirəm…", nomic: "Bu brauzerdə mikrofonla yazı işləmir. Chrome istifadə edin və ya yazın." },
-  en: { tell: "Tell", ph: "Tell your story…", end: "The end! Make my book", on: "Voice: on", off: "Voice: off", again: "Start over", shelf: "My bookshelf", making: "Making your book… ✨", back: "Back", prev: "Back page", next: "Next page", fin: "The end", read: "Read this page to me", more: "Tell your friend a little more first, then make your book.", novoice: "This device has no English voice, so your friend answers in writing.", mic: "Tap to talk", listening: "Listening…", nomic: "Voice typing doesn't work in this browser. Use Chrome or type instead." },
-  lt: { tell: "Pasakoti", ph: "Pasakok savo pasaką…", end: "Pabaiga! Padaryk mano knygą", on: "Balsas: įjungtas", off: "Balsas: išjungtas", again: "Pradėti iš naujo", shelf: "Mano knygų lentyna", making: "Kuriama tavo knyga… ✨", back: "Atgal", prev: "Ankstesnis puslapis", next: "Kitas puslapis", fin: "Pabaiga", read: "Perskaityk man šį puslapį", more: "Papasakok draugui dar šiek tiek, tada padarysime knygą.", novoice: "Šiame įrenginyje nėra lietuviško balso, todėl draugas atsako raštu.", mic: "Paspausk ir kalbėk", listening: "Klausau…", nomic: "Šioje naršyklėje balso įvestis neveikia. Naudokite Chrome arba rašykite." },
-  ru: { tell: "Рассказать", ph: "Расскажи свою сказку…", end: "Конец! Сделай мою книжку", on: "Голос: вкл", off: "Голос: выкл", again: "Начать заново", shelf: "Моя книжная полка", making: "Делаю твою книжку… ✨", back: "Назад", prev: "Предыдущая", next: "Дальше", fin: "Конец", read: "Прочитай мне эту страницу", more: "Расскажи другу ещё чуть-чуть, а потом сделаем книжку.", novoice: "На этом устройстве нет русского голоса, поэтому друг отвечает текстом.", mic: "Нажми и говори", listening: "Слушаю…", nomic: "Голосовой ввод не работает в этом браузере. Используйте Chrome или пишите." },
+  az: { tell: "Danış", ph: "Nağılını danış…", end: "Bitdi! Kitabımı düzəlt", on: "Səs: açıq", off: "Səs: bağlı", again: "Yenidən başla", shelf: "Kitab rəfim", making: "Kitabın hazırlanır… ✨", back: "Geri", prev: "Əvvəlki səhifə", next: "Növbəti səhifə", fin: "Son", read: "Bu səhifəni mənə oxu", more: "Dostuna bir az da danış, sonra kitabını düzəldək.", novoice: "Bu cihazda azərbaycanca səs yoxdur, ona görə dostun yazı ilə cavab verir.", mic: "Danışmaq üçün bas", listening: "Dinləyirəm…", nomic: "Bu brauzerdə mikrofonla yazı işləmir. Chrome istifadə edin və ya yazın.", cont: "Davamını danış ✨", nextPart: "Davamını oxu →" },
+  en: { tell: "Tell", ph: "Tell your story…", end: "The end! Make my book", on: "Voice: on", off: "Voice: off", again: "Start over", shelf: "My bookshelf", making: "Making your book… ✨", back: "Back", prev: "Back page", next: "Next page", fin: "The end", read: "Read this page to me", more: "Tell your friend a little more first, then make your book.", novoice: "This device has no English voice, so your friend answers in writing.", mic: "Tap to talk", listening: "Listening…", nomic: "Voice typing doesn't work in this browser. Use Chrome or type instead.", cont: "Tell what happens next ✨", nextPart: "Read the next part →" },
+  lt: { tell: "Pasakoti", ph: "Pasakok savo pasaką…", end: "Pabaiga! Padaryk mano knygą", on: "Balsas: įjungtas", off: "Balsas: išjungtas", again: "Pradėti iš naujo", shelf: "Mano knygų lentyna", making: "Kuriama tavo knyga… ✨", back: "Atgal", prev: "Ankstesnis puslapis", next: "Kitas puslapis", fin: "Pabaiga", read: "Perskaityk man šį puslapį", more: "Papasakok draugui dar šiek tiek, tada padarysime knygą.", novoice: "Šiame įrenginyje nėra lietuviško balso, todėl draugas atsako raštu.", mic: "Paspausk ir kalbėk", listening: "Klausau…", nomic: "Šioje naršyklėje balso įvestis neveikia. Naudokite Chrome arba rašykite.", cont: "Sek tęsinį ✨", nextPart: "Skaityti tęsinį →" },
+  ru: { tell: "Рассказать", ph: "Расскажи свою сказку…", end: "Конец! Сделай мою книжку", on: "Голос: вкл", off: "Голос: выкл", again: "Начать заново", shelf: "Моя книжная полка", making: "Делаю твою книжку… ✨", back: "Назад", prev: "Предыдущая", next: "Дальше", fin: "Конец", read: "Прочитай мне эту страницу", more: "Расскажи другу ещё чуть-чуть, а потом сделаем книжку.", novoice: "На этом устройстве нет русского голоса, поэтому друг отвечает текстом.", mic: "Нажми и говори", listening: "Слушаю…", nomic: "Голосовой ввод не работает в этом браузере. Используйте Chrome или пишите.", cont: "Расскажи продолжение ✨", nextPart: "Читать продолжение →" },
 };
+
+export function continueGreet(lang: LangCode, title: string) {
+  return {
+    az: `Gəl "${title}" nağılının davamını danışaq! Sonra nə oldu?`,
+    en: `Let's carry on with "${title}"! What happened next?`,
+    lt: `Tęskime pasaką „${title}“! Kas buvo toliau?`,
+    ru: `Давай продолжим сказку «${title}»! Что было дальше?`,
+  }[lang];
+}
 
 export function greet(lang: LangCode, child: string, c: CompanionId) {
   const { name, is } = COMPANIONS[c], what = is[lang];

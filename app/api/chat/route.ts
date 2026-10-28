@@ -1,10 +1,11 @@
 import { z } from "zod";
-import { client, CHAT_MODEL, ChildSchema, CompanionSchema, TurnSchema, listenerSystem, turnReminder, apiError } from "@/lib/ai";
+import { client, CHAT_MODEL, ChildSchema, CompanionSchema, PreviousSchema, TurnSchema, listenerSystem, turnReminder, apiError } from "@/lib/ai";
 import { denied } from "@/lib/access";
 
 const Body = z.object({
   child: ChildSchema,
   companion: CompanionSchema,
+  previous: PreviousSchema,
   messages: z.array(TurnSchema).min(1).max(40),
   knownCharacters: z.array(z.string().max(60)).max(15).default([]),
 });
@@ -15,7 +16,7 @@ export async function POST(request: Request) {
   if (blocked) return blocked;
   const parsed = Body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Invalid request." }, { status: 400 });
-  const { child, companion, messages, knownCharacters } = parsed.data;
+  const { child, companion, messages, knownCharacters, previous } = parsed.data;
   if (messages[0].role !== "user" || messages.at(-1)!.role !== "user") return Response.json({ error: "Invalid request." }, { status: 400 });
 
   try {
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
       model: CHAT_MODEL,
       max_tokens: 1024,
       output_config: { effort: "low" },
-      system: listenerSystem(child, knownCharacters, companion),
+      system: listenerSystem(child, knownCharacters, companion, previous),
       // A short operator reminder after the child's latest line keeps long chats as short and gentle as the first turns.
       messages: [...messages, { role: "system", content: turnReminder(child) }],
     });
