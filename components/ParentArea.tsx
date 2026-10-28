@@ -122,7 +122,7 @@ function Dashboard({ child: realChild, stories: real, insight: realInsight, onIn
               {openId === s.id && <span style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}>
                 <span className="note"><b>What this may show:</b> {s.parentNote}</span>
                 <span className="row">{s.themes.map(t => <span key={t} className="tag">{t}</span>)}</span>
-                {s.transcript && <details className="tx"><summary>Read the conversation</summary>{s.transcript.map((m, i) => <p key={i}><b>{m.role === "user" ? child.name : "Owl"}:</b> {m.content}</p>)}</details>}
+                {s.transcript && <details className="tx"><summary>Read the conversation</summary>{s.transcript.map((m, i) => <p key={i}><b>{m.role === "user" ? child.name : "Friend"}:</b> {m.content}</p>)}</details>}
                 <span><button className="btn" onClick={() => setReading(s)}>Open the book</button></span></span>}
             </span>
             <span className="concern" title={s.concern} style={{ background: s.concern === "talk" ? "var(--e-ang)" : s.concern === "watch" ? "var(--e-fear)" : "var(--line)" }} />

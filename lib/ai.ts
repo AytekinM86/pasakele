@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
-import { LANGS, THEMES, type LangCode } from "./data";
+import { COMPANIONS, COMPANION_IDS, LANGS, THEMES, type CompanionId, type LangCode } from "./data";
 
 // Server-only: the key is read from ANTHROPIC_API_KEY (.env.local locally, Vercel env vars in production).
 export const client = new Anthropic();
@@ -23,10 +23,14 @@ export const TurnSchema = z.object({
 
 const langName = (l: LangCode) => LANGS[l].english;
 
-export function listenerSystem(child: Child, knownCharacters: string[]) {
+export const CompanionSchema = z.enum(COMPANION_IDS).default("owl");
+
+export function listenerSystem(child: Child, knownCharacters: string[], companion: CompanionId = "owl") {
   const L = langName(child.lang);
-  return `You are Pelėda, a gentle, curious owl who LISTENS to stories invented by a ${child.age}-year-old child named ${child.name}. Speak ${L} only, at a ${child.age}-year-old's level.
-Write plain text only: no markdown, no asterisks, no bold, no lists. Your words are read aloud to the child.The child is the author. Never take over the story or add your own plot. Reply with 1-2 very short sentences: a warm reaction to what they said, then ONE simple open question that helps them continue (what happened next, how a character felt, what something looked like). Use the child's own character names.
+  const { name, persona } = COMPANIONS[companion];
+  return `You are ${name}, ${persona}, who LISTENS to stories invented by a ${child.age}-year-old child named ${child.name}. Stay in character, but stay gentle. Speak ${L} only, at a ${child.age}-year-old's level.
+Write plain text only: no markdown, no asterisks, no bold, no lists. Your words are read aloud to the child.
+The child is the author. Never take over the story or add your own plot. Reply with 1-2 very short sentences: a warm reaction to what they said, then ONE simple open question that helps them continue (what happened next, how a character felt, what something looked like). Use the child's own character names.
 Never introduce scary, violent or sad content yourself. If the child's story mentions someone hurting them, being touched in a bad way, wanting to hurt themselves, or being in danger at home, stay calm and kind, say it's important to tell a grown-up they trust, and do not ask probing questions.
 If the child uses a word from another language (for example Lithuanian or English inside a ${L} story), never correct them. In your reply, naturally use the ${L} word for it once, so they hear it.
 ${knownCharacters.length ? `Characters from ${child.name}'s earlier stories: ${knownCharacters.join(", ")}. If one comes back, greet them like an old friend.` : ""}
@@ -52,8 +56,8 @@ export const StorySchema = z.object({
 
 export function storyPrompt(child: Child, transcript: z.infer<typeof TurnSchema>[]) {
   const L = langName(child.lang);
-  return `A ${child.age}-year-old child invented a story while talking to a listening owl. Conversation (Child = author):
-${transcript.map(m => (m.role === "user" ? "Child: " : "Owl: ") + m.content).join("\n")}
+  return `A ${child.age}-year-old child invented a story while talking to a listening story friend. Conversation (Child = author):
+${transcript.map(m => (m.role === "user" ? "Child: " : "Story friend: ") + m.content).join("\n")}
 
 Fill in the fields:
 - title: short, in ${L}.

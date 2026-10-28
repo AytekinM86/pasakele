@@ -28,7 +28,23 @@ export type Setting = "forest" | "sea" | "space" | "castle" | "city" | "home" | 
 export type Page = { text: string; setting: Setting; time: "day" | "night" | "sunset"; characters: string[] };
 export type Turn = { role: "user" | "assistant"; content: string };
 export type ForeignWord = { word: string; lang: string; native: string; gloss: string };
-export type Child = { name: string; age: number; lang: LangCode; note?: string };
+// Story friends the child can pick. All original characters (no third-party brands).
+export const COMPANION_IDS = ["owl", "doll", "car", "puppy", "dino", "unicorn"] as const;
+export type CompanionId = (typeof COMPANION_IDS)[number];
+export const COMPANIONS: Record<CompanionId, { name: string; persona: string; is: Record<LangCode, string> }> = {
+  owl: { name: "Pelėda", persona: "a gentle, curious owl", is: { az: "bayquşam", en: "a wise owl", lt: "pelėda", ru: "сова" } },
+  doll: { name: "Lala", persona: "a kind, cheerful doll in a pink dress who loves tea parties, pretty dresses and princesses", is: { az: "gəlinciyəm", en: "a friendly doll", lt: "lėlė", ru: "кукла" } },
+  car: { name: "Zoomy", persona: "a cheerful little race car who loves roads, speed and adventures; you sometimes say \"vroom!\"", is: { az: "balaca yarış maşınıyam", en: "a little race car", lt: "lenktyninė mašinėlė", ru: "гоночная машинка" } },
+  puppy: { name: "Bobo", persona: "a playful, friendly puppy; you sometimes say \"woof!\"", is: { az: "oynaq küçüyəm", en: "a playful puppy", lt: "šuniukas", ru: "щенок" } },
+  dino: { name: "Dino", persona: "a friendly little dinosaur who is never scary and loves stomping and exploring", is: { az: "mehriban dinozavram", en: "a friendly dinosaur", lt: "dinozauriukas", ru: "динозаврик" } },
+  unicorn: { name: "Luna", persona: "a magical, kind unicorn who loves rainbows and stars", is: { az: "sehrli təkbuynuzam", en: "a magic unicorn", lt: "vienaragis", ru: "единорог" } },
+};
+export const PICK_FRIEND: Record<LangCode, string> = {
+  az: "Bu gün kiminlə danışmaq istəyirsən?", en: "Who do you want to talk to today?",
+  lt: "Su kuo nori šiandien kalbėtis?", ru: "С кем хочешь поговорить сегодня?",
+};
+
+export type Child = { name: string; age: number; lang: LangCode; note?: string; companion?: CompanionId };
 export type Story = {
   id: string; createdAt: number; lang: LangCode; title: string; pages: Page[]; summary: string;
   themes: Theme[]; emotions: Record<EmotionKey, number>; characters: { name: string; role: Role }[];
@@ -48,18 +64,21 @@ export const STARTERS: Record<LangCode, string[]> = {
 
 // Child-facing words in the chosen language.
 export const TX: Record<LangCode, Record<string, string>> = {
-  az: { tell: "Danış", ph: "Nağılını danış…", end: "Bitdi! Kitabımı düzəlt", on: "Bayquş danışır: açıq", off: "Bayquş danışır: bağlı", again: "Yenidən başla", shelf: "-nin kitab rəfi", making: "Kitabın hazırlanır… ✨", back: "Geri", prev: "Əvvəlki səhifə", next: "Növbəti səhifə", fin: "Son", read: "Bu səhifəni mənə oxu", more: "Bayquşa bir az da danış, sonra kitabını düzəldək.", novoice: "Bu cihazda azərbaycanca səs yoxdur, ona görə bayquş yazı ilə cavab verir.", mic: "Danışmaq üçün bas", listening: "Dinləyirəm…", nomic: "Bu brauzerdə mikrofonla yazı işləmir. Chrome istifadə edin və ya yazın." },
-  en: { tell: "Tell", ph: "Tell your story…", end: "The end! Make my book", on: "Owl talks: on", off: "Owl talks: off", again: "Start over", shelf: "'s bookshelf", making: "Making your book… ✨", back: "Back", prev: "Back page", next: "Next page", fin: "The end", read: "Read this page to me", more: "Tell the owl a little more first, then make your book.", novoice: "This device has no English voice, so the owl answers in writing.", mic: "Tap to talk", listening: "Listening…", nomic: "Voice typing doesn't work in this browser. Use Chrome or type instead." },
-  lt: { tell: "Pasakoti", ph: "Pasakok savo pasaką…", end: "Pabaiga! Padaryk mano knygą", on: "Pelėda kalba: įjungta", off: "Pelėda kalba: išjungta", again: "Pradėti iš naujo", shelf: " knygų lentyna", making: "Kuriama tavo knyga… ✨", back: "Atgal", prev: "Ankstesnis puslapis", next: "Kitas puslapis", fin: "Pabaiga", read: "Perskaityk man šį puslapį", more: "Papasakok pelėdai dar šiek tiek, tada padarysime knygą.", novoice: "Šiame įrenginyje nėra lietuviško balso, todėl pelėda atsako raštu.", mic: "Paspausk ir kalbėk", listening: "Klausau…", nomic: "Šioje naršyklėje balso įvestis neveikia. Naudokite Chrome arba rašykite." },
-  ru: { tell: "Рассказать", ph: "Расскажи свою сказку…", end: "Конец! Сделай мою книжку", on: "Сова говорит: вкл", off: "Сова говорит: выкл", again: "Начать заново", shelf: ": книжная полка", making: "Делаю твою книжку… ✨", back: "Назад", prev: "Предыдущая", next: "Дальше", fin: "Конец", read: "Прочитай мне эту страницу", more: "Расскажи сове ещё чуть-чуть, а потом сделаем книжку.", novoice: "На этом устройстве нет русского голоса, поэтому сова отвечает текстом.", mic: "Нажми и говори", listening: "Слушаю…", nomic: "Голосовой ввод не работает в этом браузере. Используйте Chrome или пишите." },
+  az: { tell: "Danış", ph: "Nağılını danış…", end: "Bitdi! Kitabımı düzəlt", on: "Səs: açıq", off: "Səs: bağlı", again: "Yenidən başla", shelf: "-nin kitab rəfi", making: "Kitabın hazırlanır… ✨", back: "Geri", prev: "Əvvəlki səhifə", next: "Növbəti səhifə", fin: "Son", read: "Bu səhifəni mənə oxu", more: "Dostuna bir az da danış, sonra kitabını düzəldək.", novoice: "Bu cihazda azərbaycanca səs yoxdur, ona görə dostun yazı ilə cavab verir.", mic: "Danışmaq üçün bas", listening: "Dinləyirəm…", nomic: "Bu brauzerdə mikrofonla yazı işləmir. Chrome istifadə edin və ya yazın." },
+  en: { tell: "Tell", ph: "Tell your story…", end: "The end! Make my book", on: "Voice: on", off: "Voice: off", again: "Start over", shelf: "'s bookshelf", making: "Making your book… ✨", back: "Back", prev: "Back page", next: "Next page", fin: "The end", read: "Read this page to me", more: "Tell your friend a little more first, then make your book.", novoice: "This device has no English voice, so your friend answers in writing.", mic: "Tap to talk", listening: "Listening…", nomic: "Voice typing doesn't work in this browser. Use Chrome or type instead." },
+  lt: { tell: "Pasakoti", ph: "Pasakok savo pasaką…", end: "Pabaiga! Padaryk mano knygą", on: "Balsas: įjungtas", off: "Balsas: išjungtas", again: "Pradėti iš naujo", shelf: " knygų lentyna", making: "Kuriama tavo knyga… ✨", back: "Atgal", prev: "Ankstesnis puslapis", next: "Kitas puslapis", fin: "Pabaiga", read: "Perskaityk man šį puslapį", more: "Papasakok draugui dar šiek tiek, tada padarysime knygą.", novoice: "Šiame įrenginyje nėra lietuviško balso, todėl draugas atsako raštu.", mic: "Paspausk ir kalbėk", listening: "Klausau…", nomic: "Šioje naršyklėje balso įvestis neveikia. Naudokite Chrome arba rašykite." },
+  ru: { tell: "Рассказать", ph: "Расскажи свою сказку…", end: "Конец! Сделай мою книжку", on: "Голос: вкл", off: "Голос: выкл", again: "Начать заново", shelf: ": книжная полка", making: "Делаю твою книжку… ✨", back: "Назад", prev: "Предыдущая", next: "Дальше", fin: "Конец", read: "Прочитай мне эту страницу", more: "Расскажи другу ещё чуть-чуть, а потом сделаем книжку.", novoice: "На этом устройстве нет русского голоса, поэтому друг отвечает текстом.", mic: "Нажми и говори", listening: "Слушаю…", nomic: "Голосовой ввод не работает в этом браузере. Используйте Chrome или пишите." },
 };
 
-export const GREET: Record<LangCode, (n: string) => string> = {
-  az: n => `Salam, ${n}! Mən bayquş Pelėdayam. Mənə öz nağılını danış, mən qulaq asıram!`,
-  en: n => `Hi ${n}! I'm Pelėda the owl. Tell me a story you made up, I'm listening!`,
-  lt: n => `Labas, ${n}! Aš pelėda Pelėda. Papasakok man savo pasaką, aš klausau!`,
-  ru: n => `Привет, ${n}! Я сова Пелёда. Расскажи мне свою сказку, я слушаю!`,
-};
+export function greet(lang: LangCode, child: string, c: CompanionId) {
+  const { name, is } = COMPANIONS[c], what = is[lang];
+  return {
+    az: `Salam, ${child}! Mənim adım ${name}, mən ${what}. Mənə öz nağılını danış, mən qulaq asıram!`,
+    en: `Hi ${child}! I'm ${name}, ${what}. Tell me a story you made up, I'm listening!`,
+    lt: `Labas, ${child}! Aš ${name}, ${what}. Papasakok man savo pasaką, aš klausau!`,
+    ru: `Привет, ${child}! Я ${name}, ${what}. Расскажи мне свою сказку, я слушаю!`,
+  }[lang];
+}
 
 export const SETUP: Record<LangCode, Record<string, string>> = {
   az: { eb: "Valideyn üçün · bir dəfəlik", h: "Uşağınız üçün Pasakėlė-ni qurun", p: "Bayquş Pelėda uşağın uydurduğu nağılları dinləyir, suallar verir və hər nağılı şəkilli kitaba çevirir. Seçdiyiniz dili uşaq dəyişə bilməz. Dəyişmək üçün valideyn bölməsinə daxil olun.", n: "Uşağın adı", a: "Yaşı", l: "Nağıl dili", go: "Başla", ph: "məs. Ayla" },

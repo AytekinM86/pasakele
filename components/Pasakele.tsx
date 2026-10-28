@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { GREET, LANGS, SETUP, SPINES, STARTERS, THEMES, TX, type Child, type Insight, type LangCode, type Story, type Turn } from "@/lib/data";
+import { COMPANIONS, COMPANION_IDS, LANGS, PICK_FRIEND, SETUP, SPINES, STARTERS, THEMES, TX, greet, type Child, type CompanionId, type Insight, type LangCode, type Story, type Turn } from "@/lib/data";
+import { Character } from "./Characters";
 import { store } from "@/lib/store";
 import { paint } from "@/lib/paint";
 import { NEED_CODE, post } from "@/lib/api";
@@ -91,6 +92,7 @@ export default function Pasakele() {
           ? <ParentArea child={child} stories={stories} insight={insight} onInsight={saveInsight} onChild={saveChild} />
           : !child ? <Setup onDone={saveChild} />
           : <StoryTime child={child} stories={stories} onStory={addStory} speak={speak} canSpeak={serverVoice || !!voice}
+              onCompanion={c => saveChild({ ...child, companion: c })}
               speakOn={speakOn} setSpeakOn={v => { setSpeakOn(v); store.saveSpeak(v); if (!v) { audioRef.current?.pause(); try { speechSynthesis.cancel(); } catch { /* none */ } } }} />}
       </div></main>
     </>
@@ -117,20 +119,6 @@ function OwlMark() {
   return <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="21" r="16" fill="var(--teal)" /><circle cx="14" cy="18" r="5.5" fill="var(--paper)" /><circle cx="26" cy="18" r="5.5" fill="var(--paper)" /><circle cx="14" cy="18" r="2.4" fill="var(--ink)" /><circle cx="26" cy="18" r="2.4" fill="var(--ink)" /><path d="M18 24l2 3 2-3z" fill="var(--sun)" /></svg>;
 }
 
-export function Owl() {
-  return (
-    <svg className="owl" viewBox="0 0 120 130" aria-hidden="true"><g className="owl-body">
-      <path d="M28 30 L22 8 L44 22 Z M92 30 L98 8 L76 22 Z" fill="var(--teal)" />
-      <ellipse cx="60" cy="72" rx="44" ry="52" fill="var(--teal)" /><ellipse cx="60" cy="88" rx="28" ry="32" fill="var(--teal-soft)" />
-      <circle cx="42" cy="50" r="16" fill="var(--paper)" /><circle cx="78" cy="50" r="16" fill="var(--paper)" />
-      <circle cx="44" cy="52" r="7" fill="var(--ink)" /><circle cx="80" cy="52" r="7" fill="var(--ink)" />
-      <rect className="lid" x="26" y="34" width="68" height="32" rx="16" fill="var(--teal)" />
-      <path d="M54 62 L60 74 L66 62 Z" fill="var(--sun)" />
-      <path d="M40 122 l6 -8 l6 8 M68 122 l6 -8 l6 8" stroke="var(--sun)" strokeWidth="4" fill="none" strokeLinecap="round" />
-    </g></svg>
-  );
-}
-
 function Setup({ onDone }: { onDone: (c: Child) => void }) {
   const [lang, setLang] = useState<LangCode>("az");
   const [name, setName] = useState("");
@@ -138,7 +126,7 @@ function Setup({ onDone }: { onDone: (c: Child) => void }) {
   const t = SETUP[lang];
   return (
     <section className="card" style={{ alignItems: "center", textAlign: "center" }}>
-      <Owl /><span className="eyebrow">{t.eb}</span><h1 style={{ fontSize: "1.9rem" }}>{t.h}</h1>
+      <Character id="owl" /><span className="eyebrow">{t.eb}</span><h1 style={{ fontSize: "1.9rem" }}>{t.h}</h1>
       <p className="muted" style={{ maxWidth: "50ch" }}>{t.p}</p>
       <form className="row" style={{ justifyContent: "center", alignItems: "flex-end" }}
         onSubmit={e => { e.preventDefault(); if (name.trim()) onDone({ name: name.trim(), age, lang }); }}>
@@ -159,11 +147,12 @@ const VOICE_TAG = /\[[a-zA-Z ]{2,20}\]\s*/g;
 const forSpeech = (t: string) => t.replace(/[*_#`]+/g, "").trim();
 const plain = (t: string) => forSpeech(t).replace(VOICE_TAG, "").replace(/\[[a-zA-Z ]*$/, "");
 
-function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeakOn }: {
+function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeakOn, onCompanion }: {
   child: Child; stories: Story[]; onStory: (s: Story) => void; speak: (t: string) => void;
-  canSpeak: boolean; speakOn: boolean; setSpeakOn: (v: boolean) => void;
+  canSpeak: boolean; speakOn: boolean; setSpeakOn: (v: boolean) => void; onCompanion: (c: CompanionId) => void;
 }) {
   const tx = TX[child.lang];
+  const companion: CompanionId = child.companion || "owl";
   const [chat, setChat] = useState<Turn[]>([]);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
@@ -185,7 +174,7 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
     const history: Turn[] = [...chat, { role: "user", content: text }];
     setChat([...history, { role: "assistant", content: "…" }]); setDraft(""); setBusy(true); setErr("");
     try {
-      const res = await post("/api/chat", { child, messages: history, knownCharacters: known });
+      const res = await post("/api/chat", { child, companion, messages: history, knownCharacters: known });
       if (!res.ok || !res.body) throw new Error((await res.json().catch(() => null))?.error || "The owl couldn't answer just now. Try again.");
       const reader = res.body.getReader(), dec = new TextDecoder();
       let reply = "";
@@ -250,9 +239,18 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
 
   return (
     <>
-      <div className={`stage ${busy || listening ? "thinking" : ""}`}><Owl />
+      {!chat.length && (
+        <section className="friends" aria-labelledby="pick-h">
+          <h2 id="pick-h">{PICK_FRIEND[child.lang]}</h2>
+          <div className="friend-row">{COMPANION_IDS.map(id => (
+            <button key={id} className="friend" aria-pressed={companion === id} onClick={() => onCompanion(id)}>
+              <Character id={id} className="friend-pic" /><span>{COMPANIONS[id].name}</span>
+            </button>))}</div>
+        </section>
+      )}
+      <div className={`stage ${busy || listening ? "thinking" : ""}`}><Character id={companion} />
         <div className="chat" aria-live="polite">
-          <div className="bub owl-say">{making ? tx.making : GREET[child.lang](child.name)}</div>
+          <div className="bub owl-say">{making ? tx.making : greet(child.lang, child.name, companion)}</div>
           {chat.map((m, i) => <div key={i} className={`bub ${m.role === "user" ? "kid" : "owl-say"}`}>{m.content}</div>)}
           <div ref={endRef} style={{ scrollMarginBottom: 200 }} />
         </div>

@@ -73,6 +73,15 @@ label.f { display: flex; flex-direction: column; gap: 5px; font-weight: 700; fon
 .mic.on { background: var(--berry); color: var(--paper); animation: pulse 1s ease-in-out infinite }
 .mic:disabled { opacity: .5; cursor: not-allowed }
 @keyframes pulse { 50% { box-shadow: 0 0 0 10px rgb(201 60 106 / .2) } }
+/* Friend picker: the child chooses who listens to the story. */
+.friends { display: flex; flex-direction: column; gap: 10px }
+.friends h2 { font-size: 1.3rem }
+.friend-row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px }
+.friend { border: 3px solid var(--line); background: var(--paper); border-radius: 18px; padding: 8px 6px 10px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 4px; font-family: var(--display); font-weight: 600; font-size: 1rem }
+.friend[aria-pressed="true"] { border-color: var(--sun); background: var(--teal-soft) }
+.friend-pic { width: 100%; max-width: 76px; height: auto }
+@media (max-width: 560px) { .friend-row { grid-template-columns: repeat(3, minmax(0, 1fr)) } }
 .starters { display: flex; flex-wrap: wrap; gap: 8px }
 .starter { border: 2px dashed var(--line); background: none; border-radius: 16px; padding: 8px 14px; font-weight: 700; cursor: pointer; text-align: left }
 .starter:hover { border-color: var(--teal) }
