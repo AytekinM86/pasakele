@@ -32,7 +32,7 @@ export type ForeignWord = { word: string; lang: string; native: string; gloss: s
 export const COMPANION_IDS = ["owl", "doll", "car", "puppy", "dino", "unicorn"] as const;
 export type CompanionId = (typeof COMPANION_IDS)[number];
 export const COMPANIONS: Record<CompanionId, { name: string; persona: string; is: Record<LangCode, string> }> = {
-  owl: { name: "Pelėda", persona: "a gentle, curious owl", is: { az: "bayquşam", en: "a wise owl", lt: "pelėda", ru: "сова" } },
+  owl: { name: "Pelėda", persona: "a gentle, curious owl", is: { az: "müdrik bayquşam", en: "a wise owl", lt: "išmintinga pelėda", ru: "мудрая сова" } },
   doll: { name: "Lala", persona: "a kind, cheerful doll in a pink dress who loves tea parties, pretty dresses and princesses", is: { az: "gəlinciyəm", en: "a friendly doll", lt: "lėlė", ru: "кукла" } },
   car: { name: "Zoomy", persona: "a cheerful little race car who loves roads, speed and adventures", is: { az: "balaca yarış maşınıyam", en: "a little race car", lt: "lenktyninė mašinėlė", ru: "гоночная машинка" } },
   puppy: { name: "Bobo", persona: "a playful, friendly puppy", is: { az: "oynaq küçüyəm", en: "a playful puppy", lt: "šuniukas", ru: "щенок" } },

@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     const stream = client.messages.stream({
       model: CHAT_MODEL,
       max_tokens: 1024,
-      output_config: { effort: "low" },
+      output_config: { effort: "medium" },
       system: listenerSystem(child, knownCharacters, companion),
       messages,
     });
