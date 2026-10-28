@@ -67,7 +67,7 @@ export default function Pasakele() {
       } catch { /* fall back to the browser voice */ }
     }
     if (!voice) return;
-    try { const u = new SpeechSynthesisUtterance(t); u.voice = voice; u.lang = voice.lang; u.rate = 0.95; u.pitch = 1.15; speechSynthesis.speak(u); } catch { /* no speech */ }
+    try { const u = new SpeechSynthesisUtterance(t.replace(/\[[a-zA-Z ]{2,20}\]\s*/g, "")); u.voice = voice; u.lang = voice.lang; u.rate = 0.95; u.pitch = 1.15; speechSynthesis.speak(u); } catch { /* no speech */ }
   }, [voice, speakOn, serverVoice, lang]);
 
   const saveChild = (c: Child) => { setChild(c); store.saveChild(c); };
@@ -153,8 +153,11 @@ function Setup({ onDone }: { onDone: (c: Child) => void }) {
   );
 }
 
-// The owl's replies are shown and spoken as plain text; drop any markdown marks the model adds.
-const plain = (t: string) => t.replace(/[*_#`]+/g, "");
+// The owl's replies carry voice tags like [excited] for ElevenLabs. Speech keeps them; the screen shows plain text
+// (no tags, no markdown marks, and no half-streamed tag at the end).
+const VOICE_TAG = /\[[a-zA-Z ]{2,20}\]\s*/g;
+const forSpeech = (t: string) => t.replace(/[*_#`]+/g, "").trim();
+const plain = (t: string) => forSpeech(t).replace(VOICE_TAG, "").replace(/\[[a-zA-Z ]*$/, "");
 
 function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeakOn }: {
   child: Child; stories: Story[]; onStory: (s: Story) => void; speak: (t: string) => void;
@@ -192,9 +195,9 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
         reply += dec.decode(value, { stream: true });
         setChat([...history, { role: "assistant", content: plain(reply) }]);
       }
-      reply = plain(reply).trim() || "…";
-      setChat([...history, { role: "assistant", content: reply }]);
-      speak(reply);
+      const shown = plain(reply).trim() || "…";
+      setChat([...history, { role: "assistant", content: shown }]);
+      speak(forSpeech(reply) || shown);
     } catch (e) {
       setChat(history.slice(0, -1)); setDraft(text); setErr((e as Error).message);
     }
