@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { EMO, GENDER_TX, HEAVY, LANGS, ROLE, THEMES, TX, titleOf, type Child, type Gender, type Insight, type LangCode, type Role, type Setting, type Story } from "@/lib/data";
 import { EXAMPLES, EXAMPLE_CHILD, EXAMPLE_INSIGHT } from "@/lib/examples";
-import { bookHTML, reportHTML } from "@/lib/reports";
+import { downloadBookPdf, reportHTML } from "@/lib/reports";
 import { downloadPdf } from "@/lib/pdf";
 import { post } from "@/lib/api";
 import { Book } from "./Pasakele";
@@ -275,7 +275,7 @@ function Reports({ list, child, ins, useEx, t }: { list: Story[]; child: Child; 
         <div className="sub"><h3>{t.bookH(child.name, year)}</h3>
           <div className="cover"><div className="cover-in"><small>{t.coverLine(list.length, list.reduce((a, s) => a + s.pages.length, 0))}</small><b>{t.coverTitle(child.name)}</b><small>{year}</small></div></div>
           <p className="muted" style={{ fontSize: ".9rem" }}>{t.bookP}</p>
-          <div className="row"><button className="btn" disabled={!list.length || !!making} onClick={() => makePdf("book", async () => downloadPdf(`${child.name}-stories-${year}.pdf`, await bookHTML(list, child)))}>{making === "book" ? t.preparing : t.downloadBook}</button>
+          <div className="row"><button className="btn" disabled={!list.length || !!making} onClick={() => makePdf("book", () => downloadBookPdf(list, child, `${child.name}-stories-${year}.pdf`))}>{making === "book" ? t.preparing : t.downloadBook}</button>
             <button className="btn sun" onClick={() => setOrdered(true)}>{t.order}</button></div>
           {ordered && <p className="note">{t.orderNote}</p>}</div>
       </div>

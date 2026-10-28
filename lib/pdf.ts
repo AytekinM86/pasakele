@@ -22,7 +22,8 @@ export async function downloadPdf(filename: string, html: string) {
       margin: [10, 10, 12, 10] as [number, number, number, number],
       filename,
       image: { type: "jpeg" as const, quality: 0.92 },
-      html2canvas: { scale: 2, backgroundColor: "#ffffff" },
+      // Browsers can't draw canvases much taller than ~32,000px (they come out blank), so long reports get a lower scale.
+      html2canvas: { scale: Math.min(2, 30000 / Math.max(1, box.scrollHeight)), backgroundColor: "#ffffff" },
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" as const },
       // Not in html2pdf's type definitions, but supported by the library.
       pagebreak: { mode: ["css", "legacy"], avoid: ["tr", "h2", "h3", ".page img", ".box"] },

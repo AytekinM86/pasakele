@@ -46,13 +46,63 @@ export function reportHTML(list: Story[], child: Child, ins: Insight | null, psy
   <h2>${t.storiesH}</h2>${list.map(s => `<h3>${day(s.createdAt)} · ${esc(titleOf(s, child.lang))}${s.concern !== "none" ? ` <span class="muted">(${t.concern[s.concern]})</span>` : ""}</h3><p>${esc(s.summary)}</p><p class="muted">${esc(s.parentNote)}</p>`).join("")}`);
 }
 
-// All stories as one illustrated book, with the cover in the child's story language.
-export async function bookHTML(list: Story[], child: Child) {
+// All stories as one illustrated PDF book, cover in the child's story language.
+// Each A4 page is drawn on its own canvas, so even a long book never hits the browser's canvas size limit.
+export async function downloadBookPdf(list: Story[], child: Child, filename: string) {
   await loadFigures(FIGURE_IDS);
-  const t = REPORT[child.lang];
-  const day = (ms: number) => fmtDay(ms, t.locale);
-  const cv = document.createElement("canvas"), year = new Date().getFullYear();
-  const pages = list.map(s => `<div class="page"><h2 style="border:0">${esc(s.title)}</h2><p class="muted" style="font-size:14px">${day(s.createdAt)}</p></div>` +
-    s.pages.map((p, i) => { paint(cv, p, (s.createdAt % 997) + i * 31); return `<div class="page"><img src="${cv.toDataURL("image/jpeg", 0.82)}" alt=""><p>${esc(p.text)}</p></div>`; }).join("")).join("");
-  return shell(child.lang, `${child.name} · ${t.book} ${year}`, `<div class="page cover"><h1 style="font-size:42px">${esc(child.name)}</h1><p style="font-size:24px;font-family:Arial,sans-serif;margin:6px 0">${t.book} · ${year}</p><p class="muted">${t.bookLine(list.length, child.age)}</p></div>${pages}`);
+  await document.fonts?.ready;
+  const { jsPDF } = await import("jspdf");
+  const t = REPORT[child.lang], year = new Date().getFullYear();
+  const root = getComputedStyle(document.documentElement);
+  const display = `${root.getPropertyValue("--font-fredoka").trim() || "Trebuchet MS"}, Arial, sans-serif`;
+  const body = `${root.getPropertyValue("--font-nunito").trim() || "Arial"}, Arial, sans-serif`;
+
+  const W = 1240, H = 1754; // A4 at 150 dpi
+  const sheet = document.createElement("canvas"); sheet.width = W; sheet.height = H;
+  const x = sheet.getContext("2d")!;
+  const art = document.createElement("canvas");
+  const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+  let first = true;
+  const addSheet = () => { if (!first) pdf.addPage(); first = false; pdf.addImage(sheet.toDataURL("image/jpeg", 0.9), "JPEG", 0, 0, 210, 297); };
+  const wrap = (text: string, font: string, maxW: number) => {
+    x.font = font; const lines: string[] = []; let line = "";
+    for (const word of text.split(/\s+/)) { const tryLine = line ? line + " " + word : word; if (x.measureText(tryLine).width > maxW && line) { lines.push(line); line = word; } else line = tryLine; }
+    if (line) lines.push(line); return lines;
+  };
+  const centred = (lines: string[], font: string, y: number, step: number, color: string) => { x.font = font; x.fillStyle = color; x.textAlign = "center"; lines.forEach((l, i) => x.fillText(l, W / 2, y + i * step)); };
+
+  // Cover
+  x.fillStyle = "#16807f"; x.fillRect(0, 0, W, H);
+  x.strokeStyle = "#ffc93c"; x.lineWidth = 10; x.strokeRect(70, 70, W - 140, H - 140);
+  centred(wrap(child.name, `700 130px ${display}`, W - 260), `700 130px ${display}`, 700, 150, "#ffc93c");
+  centred([`${t.book} · ${year}`], `600 64px ${display}`, 900, 80, "#ffffff");
+  centred([t.bookLine(list.length, child.age)], `600 40px ${body}`, 1000, 50, "#d3eeec");
+  addSheet();
+
+  for (const s of list) {
+    // Story title page
+    x.fillStyle = "#ffffff"; x.fillRect(0, 0, W, H);
+    x.fillStyle = "#eef4f1"; x.fillRect(0, H / 2 - 260, W, 520);
+    const titleLines = wrap(titleOf(s, child.lang), `700 92px ${display}`, W - 240);
+    centred(titleLines, `700 92px ${display}`, H / 2 - (titleLines.length - 1) * 55, 110, "#1d2a36");
+    centred([fmtDay(s.createdAt, t.locale)], `600 38px ${body}`, H / 2 + titleLines.length * 55 + 60, 48, "#5d6b78");
+    addSheet();
+
+    // One sheet per story page: picture on top, the child's words below
+    for (const [i, p] of s.pages.entries()) {
+      paint(art, p, (s.createdAt % 997) + i * 31);
+      x.fillStyle = "#ffffff"; x.fillRect(0, 0, W, H);
+      // Picture and text together, centred on the page.
+      const pw = W - 160, ph = pw * (art.height / art.width), font = `500 66px ${display}`, step = 90;
+      const lines = wrap(p.text, font, W - 220);
+      const top = Math.max(100, (H - (ph + 110 + lines.length * step)) / 2);
+      x.fillStyle = "#eef4f1"; x.beginPath(); x.roundRect(60, top - 20, W - 120, ph + 40, 36); x.fill();
+      x.drawImage(art, 80, top, pw, ph);
+      x.font = font; x.fillStyle = "#1d2a36"; x.textAlign = "center";
+      lines.forEach((l, k) => x.fillText(l, W / 2, top + ph + 120 + k * step));
+      x.font = `600 30px ${body}`; x.fillStyle = "#9aa6b2"; x.fillText(String(i + 1), W / 2, H - 70);
+      addSheet();
+    }
+  }
+  pdf.save(filename);
 }
