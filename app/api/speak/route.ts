@@ -2,8 +2,7 @@ import { z } from "zod";
 import { denied } from "@/lib/access";
 
 // The owl's voice: ElevenLabs text-to-speech. The key stays on the server (ELEVENLABS_API_KEY).
-// Default: an Azerbaijani voice from the ElevenLabs Voice Library (says "balaca" with a proper c).
-const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "IVMbfLv3KqUc4qDj6Yif";
+const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "EXAVITQu4vr4xnSDxMaL";
 const MODEL_ID = process.env.ELEVENLABS_MODEL || "eleven_v4";
 
 const Body = z.object({ text: z.string().min(1).max(600), lang: z.enum(["az", "en", "lt", "ru"]) });
