@@ -153,6 +153,9 @@ function Setup({ onDone }: { onDone: (c: Child) => void }) {
   );
 }
 
+// The owl's replies are shown and spoken as plain text; drop any markdown marks the model adds.
+const plain = (t: string) => t.replace(/[*_#`]+/g, "");
+
 function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeakOn }: {
   child: Child; stories: Story[]; onStory: (s: Story) => void; speak: (t: string) => void;
   canSpeak: boolean; speakOn: boolean; setSpeakOn: (v: boolean) => void;
@@ -187,9 +190,9 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
         const { done, value } = await reader.read();
         if (done) break;
         reply += dec.decode(value, { stream: true });
-        setChat([...history, { role: "assistant", content: reply }]);
+        setChat([...history, { role: "assistant", content: plain(reply) }]);
       }
-      reply = reply.trim() || "…";
+      reply = plain(reply).trim() || "…";
       setChat([...history, { role: "assistant", content: reply }]);
       speak(reply);
     } catch (e) {
@@ -248,10 +251,11 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
         <div className="chat" aria-live="polite">
           <div className="bub owl-say">{making ? tx.making : GREET[child.lang](child.name)}</div>
           {chat.map((m, i) => <div key={i} className={`bub ${m.role === "user" ? "kid" : "owl-say"}`}>{m.content}</div>)}
-          <div ref={endRef} />
+          <div ref={endRef} style={{ scrollMarginBottom: 200 }} />
         </div>
       </div>
       {!chat.length && <div className="starters">{STARTERS[child.lang].map(s => <button key={s} className="starter" onClick={() => send(s)}>{s}</button>)}</div>}
+      <div className="dock">
       <div className="composer">
         <button className={`mic ${listening ? "on" : ""}`} onClick={toggleMic} disabled={busy} aria-label={tx.mic} title={tx.mic}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>
@@ -265,6 +269,7 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
         <button className="btn sun big" onClick={finish} disabled={busy || !chat.length}>{tx.end}</button>
         {canSpeak && <button className="btn" aria-pressed={speakOn} onClick={() => setSpeakOn(!speakOn)}>{speakOn ? tx.on : tx.off}</button>}
         {chat.length > 0 && <button className="btn" onClick={() => { setChat([]); setErr(""); }}>{tx.again}</button>}
+      </div>
       </div>
       {!canSpeak && <p className="note">{tx.novoice}</p>}
       {stories.length > 0 && (
