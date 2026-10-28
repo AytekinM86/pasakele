@@ -286,10 +286,12 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
 
   if (book) return <Book story={book} tx={tx} speak={speak} canSpeak={canSpeak} onClose={() => { setBook(null); setParty(null); }}
     banner={party && <Party party={party} rt={rt} friend={companion} gifts={gifts} />} />;
-  if (album) return <Album have={stickersFrom(stories)} rt={rt} back={tx.back} onClose={() => setAlbum(false)} />;
+  const have = stickersFrom(stories);
+  if (album) return <Album have={have} rt={rt} back={tx.back} onClose={() => setAlbum(false)} />;
 
   return (
-    <>
+    <div className="story-layout">
+      <div className="story-center">
       {(
         <section className={`friends ${chat.length ? "compact" : ""}`} aria-labelledby="pick-h">
           <h2 id="pick-h">{PICK_FRIEND[child.lang]}</h2>
@@ -326,18 +328,27 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
       </div>
       </div>
       {!canSpeak && <p className="note">{tx.novoice}</p>}
-      <div className="row rewards-row">
-        <button className="btn album-btn" onClick={() => setAlbum(true)}>
-          <span className="album-stack" aria-hidden="true">{[...stickersFrom(stories)].slice(-3).map(id => <img key={id} src={stickerSrc(id)} alt="" />)}</span>
-          {rt.albumBtn} · {rt.collected(stickersFrom(stories).size, ALL_STICKERS.length)}</button>      </div>
+      </div>
+
+      {/* Wide screens: album on the left, bookshelf on the right. Narrow screens: both below the chat. */}
+      <aside className="side side-left">
+        <button className="card album-card" onClick={() => setAlbum(true)}>
+          <h2>{rt.albumBtn}</h2>
+          <div className="album-mini">{[...have].slice(-9).map(id => <img key={id} src={stickerSrc(id)} alt="" />)}
+            {Array.from({ length: Math.max(0, 9 - have.size) }, (_, i) => <span key={i} className="slot" />)}</div>
+          <span className="muted album-count">{rt.collected(have.size, ALL_STICKERS.length)}</span>
+        </button>
+      </aside>
       {stories.length > 0 && (
-        <section className="card"><h2 style={{ fontSize: "1.3rem" }}>{tx.shelf}</h2>
-          <div className="shelf">{stories.slice().reverse().map((s, i) => (
-            <button key={s.id} className="spine" style={{ background: SPINES[i % SPINES.length] }} onClick={() => setBook(s)}>
-              {s.title}<small>{dayMonthYear(s.createdAt)}</small></button>))}</div>
-        </section>
+        <aside className="side side-right">
+          <section className="card"><h2>{tx.shelf}</h2>
+            <div className="shelf">{stories.slice().reverse().map((s, i) => (
+              <button key={s.id} className="spine" style={{ background: SPINES[i % SPINES.length] }} onClick={() => setBook(s)}>
+                {s.title}<small>{dayMonthYear(s.createdAt)}</small></button>))}</div>
+          </section>
+        </aside>
       )}
-    </>
+    </div>
   );
 }
 

@@ -121,13 +121,31 @@ label.f { display: flex; flex-direction: column; gap: 5px; font-weight: 700; fon
 .starter { border: 2px dashed var(--line); background: none; border-radius: 16px; padding: 8px 14px; font-weight: 700; cursor: pointer; text-align: left }
 .starter:hover { border-color: var(--teal) }
 
+/* Story screen: one column; on wide screens the album sits left and the bookshelf right of the chat. */
+.wrap:has(.story-layout) { max-width: 1320px }
+.story-layout { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); max-width: 820px; margin: 0 auto; width: 100% }
+.story-center { display: flex; flex-direction: column; gap: 18px; min-width: 0 }
+.side { min-width: 0 }
+.side h2 { font-size: 1.15rem }
+.album-card { cursor: pointer; text-align: left; width: 100%; color: inherit }
+.album-card:hover { border-color: var(--sun) }
+.album-mini { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 6px }
+.album-mini img, .album-mini .slot { width: 100%; aspect-ratio: 3 / 4; border-radius: 8px }
+.album-mini img { background: var(--teal-soft); padding: 3px }
+.album-mini .slot { border: 2px dashed var(--line) }
+.album-count { font-weight: 700; font-size: .9rem }
+@media (min-width: 1240px) {
+  .story-layout { max-width: none; grid-template-columns: 240px minmax(0, 820px) 240px; justify-content: center; align-items: start }
+  .story-center { grid-column: 2; grid-row: 1 }
+  .side { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 76px); grid-row: 1 }
+  .side-left { grid-column: 1 }
+  .side-right { grid-column: 3; max-height: calc(100vh - 100px); overflow-y: auto; border-radius: 18px }
+  .album-mini { grid-template-columns: repeat(3, minmax(0, 1fr)) }
+  .side-right .shelf { grid-template-columns: 1fr }
+  .side-right .spine { min-height: 74px }
+}
+
 /* Rewards: sticker album, presents, celebration */
-.rewards-row { justify-content: space-between }
-.album-btn { gap: 10px }
-.album-stack { display: inline-flex }
-.album-stack img { width: 26px; height: 36px; margin-left: -8px; filter: drop-shadow(0 1px 1px rgb(0 0 0 / .2)) }
-.album-stack img:first-child { margin-left: 0 }
-.next-gift { font-weight: 700; font-size: .9rem }
 .album { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px }
 .sticker { aspect-ratio: 3 / 4; border-radius: 16px; background: var(--paper); border: 2px dashed var(--line); display: grid; place-items: center; padding: 8px }
 .sticker img { max-height: 100%; filter: grayscale(1) brightness(1.6) opacity(.28) }
