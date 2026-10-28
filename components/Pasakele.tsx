@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { COMPANIONS, COMPANION_IDS, GENDER_TX, LANGS, PICK_FRIEND, SETUP, SPINES, STARTERS, THEMES, TX, detectLang, greet, type Child, type CompanionId, type Gender, type Insight, type LangCode, type Story, type Turn } from "@/lib/data";
 import { Character } from "./Characters";
-import { ALL_STICKERS, GIFTS, REWARD_TX, giftsFor, nextGiftIn, stickerSrc, stickersFrom, type GiftId } from "@/lib/rewards";
+import { ALL_STICKERS, GIFTS, REWARD_TX, giftsFor, stickerSrc, stickersFrom, type GiftId } from "@/lib/rewards";
 import { P } from "@/lib/parentText";
 import { store } from "@/lib/store";
 import { paint } from "@/lib/paint";
@@ -329,9 +329,7 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
       <div className="row rewards-row">
         <button className="btn album-btn" onClick={() => setAlbum(true)}>
           <span className="album-stack" aria-hidden="true">{[...stickersFrom(stories)].slice(-3).map(id => <img key={id} src={stickerSrc(id)} alt="" />)}</span>
-          {rt.albumBtn} · {rt.collected(stickersFrom(stories).size, ALL_STICKERS.length)}</button>
-        {nextGiftIn(stories.length) > 0 && <span className="muted next-gift">🎁 {rt.nextGift(nextGiftIn(stories.length))}</span>}
-      </div>
+          {rt.albumBtn} · {rt.collected(stickersFrom(stories).size, ALL_STICKERS.length)}</button>      </div>
       {stories.length > 0 && (
         <section className="card"><h2 style={{ fontSize: "1.3rem" }}>{tx.shelf}</h2>
           <div className="shelf">{stories.slice().reverse().map((s, i) => (
