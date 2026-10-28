@@ -87,7 +87,7 @@ export default function Pasakele() {
         </div>
       </div></header>
       <main><div className="wrap">
-        {needCode && <CodeForm onDone={() => setNeedCode(false)} />}
+        {needCode && <CodeForm lang={lang} onDone={() => setNeedCode(false)} />}
         {mode === "parent"
           ? <ParentArea child={child} stories={stories} insight={insight} onInsight={saveInsight} onChild={saveChild} />
           : !child ? <Setup onDone={saveChild} />
@@ -99,19 +99,28 @@ export default function Pasakele() {
   );
 }
 
-// Shown when the server asks for the family code (APP_ACCESS_CODE). Entered once per device by a parent.
-function CodeForm({ onDone }: { onDone: () => void }) {
+// Shown as a dialog over the page when the server asks for the family code (APP_ACCESS_CODE). Entered once per device by a parent.
+const CODE_TX: Record<LangCode, { eb: string; h: string; p: string; save: string; after: string }> = {
+  az: { eb: "Valideyn üçün", h: "Ailə kodunu daxil edin", p: "Bu kod yad adamların appdan istifadə etməsinin qarşısını alır. Hər cihazda bir dəfə daxil edilir.", save: "Yadda saxla", after: "Saxladıqdan sonra mesajı yenidən göndərin." },
+  en: { eb: "For parents", h: "Enter the family code", p: "This keeps strangers from using the app. A parent enters it once on each device.", save: "Save", after: "After saving, send your message again." },
+  lt: { eb: "Tėvams", h: "Įveskite šeimos kodą", p: "Kodas neleidžia svetimiems naudotis programėle. Kiekviename įrenginyje jis įvedamas vieną kartą.", save: "Išsaugoti", after: "Išsaugoję dar kartą išsiųskite žinutę." },
+  ru: { eb: "Для родителей", h: "Введите семейный код", p: "Код не даёт посторонним пользоваться приложением. Вводится один раз на каждом устройстве.", save: "Сохранить", after: "После сохранения отправьте сообщение ещё раз." },
+};
+function CodeForm({ lang, onDone }: { lang: LangCode; onDone: () => void }) {
   const [code, setCode] = useState("");
+  const t = CODE_TX[lang];
   return (
-    <section className="card" role="dialog" aria-labelledby="code-h" style={{ borderColor: "var(--sun)", borderWidth: 2 }}>
-      <span className="eyebrow">For parents</span><h2 id="code-h">Enter the family code</h2>
-      <p className="muted">This keeps strangers from using the app. A parent enters the code once on each device. Ailə kodunu bir dəfə daxil edin.</p>
-      <form className="row" onSubmit={e => { e.preventDefault(); if (code.trim()) { store.saveCode(code.trim()); onDone(); } }}>
-        <input id="family-code" className="gate-input" style={{ width: 200 }} type="password" autoComplete="off" aria-label="Family code" value={code} onChange={e => setCode(e.target.value)} />
-        <button className="btn teal">Save</button>
-      </form>
-      <p className="muted" style={{ fontSize: ".85rem" }}>After saving, tap the button you tried again.</p>
-    </section>
+    <div className="modal-back">
+      <section className="card modal" role="dialog" aria-modal="true" aria-labelledby="code-h">
+        <span className="eyebrow">{t.eb}</span><h2 id="code-h">{t.h}</h2>
+        <p className="muted">{t.p}</p>
+        <form className="row" onSubmit={e => { e.preventDefault(); if (code.trim()) { store.saveCode(code.trim()); onDone(); } }}>
+          <input id="family-code" className="gate-input" style={{ width: 200 }} type="password" autoComplete="off" autoFocus aria-label={t.h} value={code} onChange={e => setCode(e.target.value)} />
+          <button className="btn teal">{t.save}</button>
+        </form>
+        <p className="muted" style={{ fontSize: ".85rem" }}>{t.after}</p>
+      </section>
+    </div>
   );
 }
 
@@ -166,6 +175,10 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
 
   useEffect(() => { endRef.current?.scrollIntoView({ block: "nearest" }); }, [chat]);
 
+  // The input grows with the text (up to the CSS max-height) so long sentences stay readable.
+  const taRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => { const ta = taRef.current; if (!ta) return; ta.style.height = "auto"; ta.style.height = ta.scrollHeight + "px"; }, [draft]);
+
   const known = [...new Set(stories.flatMap(s => s.characters.map(c => c.name)))].slice(-15);
 
   async function send(text: string) {
@@ -188,7 +201,8 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
       setChat([...history, { role: "assistant", content: shown }]);
       speak(forSpeech(reply) || shown);
     } catch (e) {
-      setChat(history.slice(0, -1)); setDraft(text); setErr((e as Error).message);
+      setChat(history.slice(0, -1)); setDraft(text);
+      if ((e as Error).message !== "🔒") setErr((e as Error).message); // the family-code dialog explains itself
     }
     setBusy(false);
   }
@@ -213,7 +227,7 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
       };
       if (!st.pages.length) st.pages = [{ text: kidLines.join(" "), setting: "meadow", time: "day", characters: ["⭐"] }];
       onStory(st); setChat([]); setBook(st);
-    } catch (e) { setErr((e as Error).message); }
+    } catch (e) { if ((e as Error).message !== "🔒") setErr((e as Error).message); }
     setBusy(false); setMaking(false);
   }
 
@@ -263,7 +277,7 @@ function StoryTime({ child, stories, onStory, speak, canSpeak, speakOn, setSpeak
         <button className={`mic ${listening ? "on" : ""}`} onClick={toggleMic} disabled={busy} aria-label={tx.mic} title={tx.mic}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>
         </button>
-        <textarea id="kid" rows={1} value={draft} placeholder={listening ? tx.listening : tx.ph} disabled={busy}
+        <textarea id="kid" ref={taRef} rows={1} value={draft} placeholder={listening ? tx.listening : tx.ph} disabled={busy}
           onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(draft); } }} />
         <button className="btn teal" onClick={() => send(draft)} disabled={busy}>{tx.tell}</button>
       </div>

@@ -88,7 +88,20 @@ label.f { display: flex; flex-direction: column; gap: 5px; font-weight: 700; fon
 .friends.compact .friend-row { gap: 6px }
 .friends.compact .friend { flex-direction: row; justify-content: center; padding: 4px 6px; border-width: 2px; border-radius: 14px; font-size: .9rem; gap: 6px }
 .friends.compact .friend-pic { max-width: 34px }
+.friend { min-width: 0; overflow: hidden }
+.friend span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+/* Family-code dialog sits above everything, centred, so it's never hidden behind pinned bars. */
+.modal-back { position: fixed; inset: 0; z-index: 20; background: rgb(0 0 0 / .45); display: grid; place-items: center;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 16px }
+.modal { width: 100%; max-width: 440px; box-shadow: 0 20px 50px rgb(0 0 0 / .3) }
 @media (max-width: 560px) {
+  /* On phones the big picker scrolls with the page; only the slim row stays pinned once the story starts. */
+  .friends:not(.compact) { position: static; box-shadow: none; margin-top: 0; padding-block: 0 }
+  .friends:not(.compact) .friend-pic { max-width: 52px }
+  .friends:not(.compact) .friend { padding: 6px 4px 8px; font-size: .9rem; border-width: 2px }
+  .friends h2 { font-size: 1.1rem }
+  .dock .btn.big { font-size: 1rem; padding: 10px 16px }
+  .composer textarea { font-size: 1rem; max-height: 104px }
   .top-in { flex-wrap: nowrap }
   .brand { font-size: 1.1rem }
   .brand svg { width: 28px; height: 28px }

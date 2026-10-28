@@ -11,7 +11,7 @@ export async function post(path: string, body: unknown): Promise<Response> {
   });
   if (res.status === 401) {
     window.dispatchEvent(new Event(NEED_CODE));
-    throw new Error("Enter the family code to continue.");
+    throw new Error("🔒");
   }
   return res;
 }

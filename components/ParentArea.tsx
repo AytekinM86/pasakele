@@ -76,7 +76,7 @@ function Dashboard({ child: realChild, stories: real, insight: realInsight, onIn
       const r = await res.json();
       if (!res.ok) throw new Error(r.error || "The summary couldn't be made. Try again.");
       onInsight({ ...r, createdAt: Date.now() });
-    } catch (e) { setErr((e as Error).message); }
+    } catch (e) { if ((e as Error).message !== "🔒") setErr((e as Error).message); }
     setBusy(false);
   }
 
